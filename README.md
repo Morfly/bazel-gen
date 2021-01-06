@@ -13,8 +13,8 @@ The following example shows how Bazel build scripts that involve list concatenat
 
 ```kotlin
 android_binary {
-    name = binaryName
-    custom_package = packageName
+    name = "example_app"
+    custom_package = "org.morfly.bazelgen.example"
     manifest = "//app:src/main/AndroidManifest.xml"
     "manifest_values" `=` {
         "minSdkVersion" to "23"
@@ -24,7 +24,8 @@ android_binary {
     multidex = "native"
     incremental_dexing = 0
     dex_shards = 5
-    deps = internalDeps + list(
+    deps = list(
+        "//app",
         artifact("androidx.databinding:databinding-runtime")
     )
 }
