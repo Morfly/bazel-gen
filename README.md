@@ -131,12 +131,16 @@ each list item.
 The following list comprehension, described in Kotlin DSL
 
 ```kotlin
-"${PACKAGE_NAME}_FILES" `=` list(...)
+"APP_FILES" `=` list(...)
 
 genrule {
-    name = "generate_" `+` "file".ref()
-    ...
-}(`for` = "file", `in` = "${TARGET_NAME}_FILES".ref())
+    name = "generate_" `+` "file[0:-3]".ref()
+    srcs = list("file".ref())
+    outs = list("file[0:-3]".strref `+` "_generated.kt")
+    cmd = """
+        ...
+    """
+}(`for` = "file", `in` = "APP_FILES".ref())
 ```
 
 will generate the corresponding Starlark statement
@@ -146,9 +150,13 @@ APP_FILES = [...]
 
 [
     genrule(
-        name = "generate_" + file
+        name = "generate_" + file[0:-3],
+        srcs = [file],
+        outs = [file[0:-3] + "_generated.kt"],
+        cmd = """
         ...
-    ) 
+        """,
+    )
     for file in APP_FILES
 ]
 ```
