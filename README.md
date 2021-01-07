@@ -9,6 +9,28 @@ A Kotlin tool that allows to:
 
 A [Kotlin DSL]() that closely resembles [Starlark]() helps to describe Bazel build files in a type-safe manner.
 
+### DSL Overview
+Overview of the main DSL features
+```kotlin
+fun build_file(
+    /**
+     * 
+     */
+) = BUILD(relativePath = "app") {
+    
+    "LIBRARIES" `=` list("//lib1")
+    
+    android_binary {
+        name = "app"
+        srcs = glob("src/main/java/**/*.java")
+        "manifest_values" `=` {
+            "minSdkVersion" to "23"
+        }
+        deps = "LIBRARIES".ref()
+        visibility = public
+    }
+}
+```
 ### Declaring Bazel files
 
 All Bazel files can be described inside builder function. For example, in order to create a `BUILD` there should be used
