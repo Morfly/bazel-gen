@@ -10,39 +10,42 @@ A Kotlin tool that allows to:
 A [Kotlin DSL]() that closely resembles [Starlark]() helps to describe Bazel build files in a type-safe manner.
 
 ### DSL Overview
+
 Overview of the main DSL features
+
 ```kotlin
 // declaring Bazel files
 fun build_file(
     /**
-     * 
+     *
      */
 ) = BUILD(relativePath = "app") {
-    
-    // declaring variable
-    "LIBRARIES" `=` list("//lib1")
-    
-    // declaring rules from the available DSL library
-    android_binary {
-        name = "app"
-        // using standard functions
-        srcs = glob("src/main/java/**/*.java")
-        // using custom attributes
-        "manifest_values" `=` {
-            "minSdkVersion" to "23"
+
+        // declaring variable
+        "LIBRARIES" `=` list("//lib1")
+
+        // declaring rules from the available DSL library
+        android_binary {
+            name = "app"
+            // using standard functions
+            srcs = glob("src/main/java/**/*.java")
+            // using custom attributes
+            "manifest_values" `=` {
+                "minSdkVersion" to "23"
+            }
+            // referring to declared variables
+            deps = list(":app_custom") `+` "LIBRARIES".ref()
+            // shortcuts for common values
+            visibility = public
         }
-        // referring to declared variables
-        deps = list(":app_custom") `+` "LIBRARIES".ref()
-        // shortcuts for common values
-        visibility = public
+
+        // declaring custom rules
+        "custom_rule" {
+            "name" `=` "app_custom"
+        }
     }
-    
-    // declaring custom rules
-    "custom_rule" {
-        "name" `=` "app_custom"
-    }
-}
 ```
+
 ### Declaring Bazel files
 
 All Bazel files can be described inside builder function. For example, in order to create a `BUILD` there should be used
@@ -131,33 +134,33 @@ each list item.
 The following list comprehension, described in Kotlin DSL
 
 ```kotlin
-"APP_FILES" `=` list(...)
+"FILE_NAMES" `=` list(...)
 
 genrule {
-    name = "generate_" `+` "file[0:-3]".ref()
+    name = "generate_" `+` "file".ref()
     srcs = list("file".ref())
-    outs = list("file[0:-3]".strref `+` "_generated.kt")
+    outs = list("file".strref `+` "_generated.kt")
     cmd = """
         ...
     """
-}(`for` = "file", `in` = "APP_FILES".ref())
+}(`for` = "file", `in` = "FILE_NAMES".ref())
 ```
 
 will generate the corresponding Starlark statement
 
 ```python
-APP_FILES = [...]
+FILE_NAMES = [...]
 
 [
     genrule(
-        name = "generate_" + file[0:-3],
+        name = "generate_" + file,
         srcs = [file],
-        outs = [file[0:-3] + "_generated.kt"],
+        outs = [file + "_generated.kt"],
         cmd = """
         ...
         """,
     )
-    for file in APP_FILES
+    for file in FILE_NAMES
 ]
 ```
 
