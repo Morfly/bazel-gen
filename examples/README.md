@@ -17,6 +17,21 @@ Each generation example consists of 2 directories:
   file.
 - `generated-project` - contains generated Bazel project.
 
+In case the generated project contains a `tools/bazel` binary it should be built with this binary.
+
+Go the project root directory
+```shell
+% cd examples/examples-generation/<example-name>/generated-project
+```
+Build the project with the custom Bazel binary.
+```shell
+% tools/bazel build example_app
+```
+or use Bazelisk which will look for `tools/bazel` and build the project with it if exists.
+```shell
+% bazelisk build example_app
+```
+
 ## Migrating Gradle projects to Bazel
 
 - [simple android:]() _Coming soon_
@@ -30,7 +45,7 @@ Each example directory is a Gradle project that can be migrated to Bazel.
 In order to migrate the project to Bazel the following command should be used:
 
 ```shell
-$ ./gradlew migrateToBazel
+% ./gradlew migrateToBazel
 ```
 
 During the migration the current project directory will be populated with the corresponding Bazel files.
