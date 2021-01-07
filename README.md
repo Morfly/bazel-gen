@@ -31,7 +31,7 @@ fun build_file(
         "manifest_values" `=` {
             "minSdkVersion" to "23"
         }
-        // refering to declared variables
+        // referring to declared variables
         deps = list(":app_custom") `+` "LIBRARIES".ref()
         // shortcuts for common values
         visibility = public
