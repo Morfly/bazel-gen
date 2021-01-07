@@ -8,23 +8,36 @@ import org.morfly.bazelgen.generator.buildfile.BuildStatement
 
 
 /**
- * @param prefix
+ *
  */
-inline fun bazelrc(prefix: String = "", body: BazelRcContext.() -> Unit): BazelRc =
+inline fun bazelrc(relativePath: String = "", body: BazelRcContext.() -> Unit): BazelRc =
     BazelRcContext()
         .apply(body)
         .statements
-        .let { BazelRc(it, prefix) }
+        .let { BazelRc(it, namePrefix = "", relativePath) }
 
 /**
- * @param prefix
+ *
  */
-inline fun bazelrc(relativePath: String, prefix: String, body: BazelRcContext.() -> Unit): BazelRc =
+inline fun String.bazelrc(relativePath: String = "", body: BazelRcContext.() -> Unit): BazelRc =
     BazelRcContext()
         .apply(body)
         .statements
-        .let { BazelRc(it, prefix, relativePath) }
+        .let { BazelRc(it, namePrefix = this, relativePath) }
 
+/**
+ *
+ */
+interface bazelrc
+
+/**
+ *
+ */
+inline fun bazelrc.bazelrc(relativePath: String = "", body: BazelRcContext.() -> Unit): BazelRc =
+    BazelRcContext()
+        .apply(body)
+        .statements
+        .let { BazelRc(it, namePrefix = this::class.java.simpleName, relativePath) }
 
 /**
  *
