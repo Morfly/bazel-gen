@@ -201,7 +201,7 @@ dependencies {
 Note: _to be uploaded to artifactory_
 
 ```groovy
-// settings.gradle.kts
+// settings.gradle
 
 includeBuild 'path/to/bazel-gen'
 ```
