@@ -3,7 +3,7 @@
 A Kotlin tool that allows to:
 
 - Generate Bazel projects
-- Migrate Gradle projects to Bazel (coming soon)
+- Migrate Gradle projects to Bazel (_coming soon_)
 
 ## Generating Starlark code
 
