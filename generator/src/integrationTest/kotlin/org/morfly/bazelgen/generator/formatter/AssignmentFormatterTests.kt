@@ -4,8 +4,10 @@ package org.morfly.bazelgen.generator.formatter
 
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import org.morfly.bazelgen.generator.dsl.type.ListReference
-import org.morfly.bazelgen.generator.dsl.type.StringFunctionCall
+import org.morfly.bazelgen.generator.dsl.core.element.ListReference
+import org.morfly.bazelgen.generator.dsl.core.element.StringFunctionCall
+import org.morfly.bazelgen.generator.formatter.IndentMode.CONTINUE_LINE
+import org.morfly.bazelgen.generator.formatter.IndentMode.NEW_LINE
 
 
 fun newAssignmentFormatter(indentSize: Int): AssignmentFormatter {
@@ -15,14 +17,24 @@ fun newAssignmentFormatter(indentSize: Int): AssignmentFormatter {
     val listFormatter = ListFormatter(indentSize)
     val dictionaryFormatter = DictionaryFormatter(quoteFormatter, indentSize)
     val functionCallFormatter = FunctionCallFormatter(indentSize)
-    val valueFormatter = ValueFormatter(
+    val comprehensionFormatter = ComprehensionFormatter(indentSize)
+    val concatenationFormatter = ConcatenationFormatter(indentSize)
+    val expressionFormatter = ExpressionFormatter(
         baseFormatter, quoteFormatter, justTextFormatter, listFormatter, dictionaryFormatter, functionCallFormatter,
-        indentSize
+        comprehensionFormatter, concatenationFormatter, indentSize
     )
-    listFormatter.valueFormatter = valueFormatter
-    dictionaryFormatter.valueFormatter = valueFormatter
-    val assignmentFormatter = AssignmentFormatter(valueFormatter, indentSize)
+    comprehensionFormatter.expressionFormatter = expressionFormatter
+    concatenationFormatter.expressionFormatter = expressionFormatter
+    listFormatter.expressionFormatter = expressionFormatter
+    dictionaryFormatter.expressionFormatter = expressionFormatter
+    val assignmentFormatter = AssignmentFormatter(expressionFormatter, indentSize)
     functionCallFormatter.assignmentFormatter = assignmentFormatter
+    val loadFormatter = LoadFormatter(quoteFormatter, indentSize)
+    val bazelRcFormatter = BazelRcFormatter()
+    val statementFormatter = BuildStatementFormatter(
+        justTextFormatter, expressionFormatter, assignmentFormatter, loadFormatter, bazelRcFormatter, indentSize
+    )
+    comprehensionFormatter.statementFormatter = statementFormatter
 
     return assignmentFormatter
 }
@@ -38,11 +50,11 @@ class AssignmentFormatterTests : ShouldSpec({
 
         val formatter = newAssignmentFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
-        formatter.format(ref, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}arg = TEST_VARIABLE"
-        formatter.format(noNameRef, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}TEST_VARIABLE"
+        formatter.format(ref, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = TEST_VARIABLE"
+        formatter.format(noNameRef, indentIndex = 1, NEW_LINE) shouldBe "${___4}TEST_VARIABLE"
 
-        formatter.format(ref, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe "arg = TEST_VARIABLE"
-        formatter.format(noNameRef, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe "TEST_VARIABLE"
+        formatter.format(ref, indentIndex = 1, CONTINUE_LINE) shouldBe "arg = TEST_VARIABLE"
+        formatter.format(noNameRef, indentIndex = 1, CONTINUE_LINE) shouldBe "TEST_VARIABLE"
     }
 
     should("format single-line list assignment") {
@@ -51,11 +63,11 @@ class AssignmentFormatterTests : ShouldSpec({
 
         val formatter = newAssignmentFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
-        formatter.format(list, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}arg = [\"item1\"]"
-        formatter.format(noNameList, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}[\"item1\"]"
+        formatter.format(list, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = [\"item1\"]"
+        formatter.format(noNameList, indentIndex = 1, NEW_LINE) shouldBe "${___4}[\"item1\"]"
 
-        formatter.format(list, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe "arg = [\"item1\"]"
-        formatter.format(noNameList, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe "[\"item1\"]"
+        formatter.format(list, indentIndex = 1, CONTINUE_LINE) shouldBe "arg = [\"item1\"]"
+        formatter.format(noNameList, indentIndex = 1, CONTINUE_LINE) shouldBe "[\"item1\"]"
     }
 
     should("format list assignment") {
@@ -71,11 +83,11 @@ class AssignmentFormatterTests : ShouldSpec({
 
         val formatter = newAssignmentFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
-        formatter.format(list, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}arg = $formattedList"
-        formatter.format(noNameList, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}$formattedList"
+        formatter.format(list, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = $formattedList"
+        formatter.format(noNameList, indentIndex = 1, NEW_LINE) shouldBe "${___4}$formattedList"
 
-        formatter.format(list, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe "arg = $formattedList"
-        formatter.format(noNameList, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe formattedList
+        formatter.format(list, indentIndex = 1, CONTINUE_LINE) shouldBe "arg = $formattedList"
+        formatter.format(noNameList, indentIndex = 1, CONTINUE_LINE) shouldBe formattedList
     }
 
     should("format single-argument function call assignment") {
@@ -90,11 +102,11 @@ class AssignmentFormatterTests : ShouldSpec({
 
         val formatter = newAssignmentFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
-        formatter.format(func, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}arg = $formattedFunc"
-        formatter.format(noNameFunc, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}$formattedFunc"
+        formatter.format(func, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = $formattedFunc"
+        formatter.format(noNameFunc, indentIndex = 1, NEW_LINE) shouldBe "${___4}$formattedFunc"
 
-        formatter.format(func, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe "arg = $formattedFunc"
-        formatter.format(noNameFunc, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe formattedFunc
+        formatter.format(func, indentIndex = 1, CONTINUE_LINE) shouldBe "arg = $formattedFunc"
+        formatter.format(noNameFunc, indentIndex = 1, CONTINUE_LINE) shouldBe formattedFunc
     }
 
     should("format function call assignment") {
@@ -110,11 +122,11 @@ class AssignmentFormatterTests : ShouldSpec({
 
         val formatter = newAssignmentFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
-        formatter.format(func, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}arg = $formattedFunc"
-        formatter.format(noNameFunc, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}$formattedFunc"
+        formatter.format(func, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = $formattedFunc"
+        formatter.format(noNameFunc, indentIndex = 1, NEW_LINE) shouldBe "${___4}$formattedFunc"
 
-        formatter.format(func, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe "arg = $formattedFunc"
-        formatter.format(noNameFunc, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe formattedFunc
+        formatter.format(func, indentIndex = 1, CONTINUE_LINE) shouldBe "arg = $formattedFunc"
+        formatter.format(noNameFunc, indentIndex = 1, CONTINUE_LINE) shouldBe formattedFunc
     }
 
     should("format single-line dictionary assignment") {
@@ -127,11 +139,11 @@ class AssignmentFormatterTests : ShouldSpec({
 
         val formatter = newAssignmentFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
-        formatter.format(dict, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}arg = $formattedDict"
-        formatter.format(noNameDict, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}$formattedDict"
+        formatter.format(dict, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = $formattedDict"
+        formatter.format(noNameDict, indentIndex = 1, NEW_LINE) shouldBe "${___4}$formattedDict"
 
-        formatter.format(dict, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe "arg = $formattedDict"
-        formatter.format(noNameDict, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe formattedDict
+        formatter.format(dict, indentIndex = 1, CONTINUE_LINE) shouldBe "arg = $formattedDict"
+        formatter.format(noNameDict, indentIndex = 1, CONTINUE_LINE) shouldBe formattedDict
     }
 
     should("format dictionary assignment") {
@@ -147,11 +159,11 @@ class AssignmentFormatterTests : ShouldSpec({
 
         val formatter = newAssignmentFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
-        formatter.format(dict, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}arg = $formattedDict"
-        formatter.format(noNameDict, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}$formattedDict"
+        formatter.format(dict, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = $formattedDict"
+        formatter.format(noNameDict, indentIndex = 1, NEW_LINE) shouldBe "${___4}$formattedDict"
 
-        formatter.format(dict, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe "arg = $formattedDict"
-        formatter.format(noNameDict, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe formattedDict
+        formatter.format(dict, indentIndex = 1, CONTINUE_LINE) shouldBe "arg = $formattedDict"
+        formatter.format(noNameDict, indentIndex = 1, CONTINUE_LINE) shouldBe formattedDict
     }
 
     should("format literals assignment") {
@@ -166,24 +178,24 @@ class AssignmentFormatterTests : ShouldSpec({
         val booleanAssignment = "arg" to true
         val noNameBooleanAssignment = "" to true
 
-        formatter.format(nullAssignment, indentIndex = 1, mode = IndentMode.NEW_LINE) shouldBe "${___4}arg = None"
-        formatter.format(noNameNullAssignment, indentIndex = 1, mode = IndentMode.NEW_LINE) shouldBe "${___4}None"
+        formatter.format(nullAssignment, indentIndex = 1, mode = NEW_LINE) shouldBe "${___4}arg = None"
+        formatter.format(noNameNullAssignment, indentIndex = 1, mode = NEW_LINE) shouldBe "${___4}None"
 
-        formatter.format(intAssignment, indentIndex = 1, mode = IndentMode.NEW_LINE) shouldBe "${___4}arg = 42"
-        formatter.format(noNameIntAssignment, indentIndex = 1, mode = IndentMode.NEW_LINE) shouldBe "${___4}42"
+        formatter.format(intAssignment, indentIndex = 1, mode = NEW_LINE) shouldBe "${___4}arg = 42"
+        formatter.format(noNameIntAssignment, indentIndex = 1, mode = NEW_LINE) shouldBe "${___4}42"
 
-        formatter.format(booleanAssignment, indentIndex = 1, mode = IndentMode.NEW_LINE) shouldBe "${___4}arg = True"
-        formatter.format(noNameBooleanAssignment, indentIndex = 1, mode = IndentMode.NEW_LINE) shouldBe "${___4}True"
+        formatter.format(booleanAssignment, indentIndex = 1, mode = NEW_LINE) shouldBe "${___4}arg = True"
+        formatter.format(noNameBooleanAssignment, indentIndex = 1, mode = NEW_LINE) shouldBe "${___4}True"
 
 
-        formatter.format(nullAssignment, indentIndex = 1, mode = IndentMode.CONTINUE_LINE) shouldBe "arg = None"
-        formatter.format(noNameNullAssignment, indentIndex = 1, mode = IndentMode.CONTINUE_LINE) shouldBe "None"
+        formatter.format(nullAssignment, indentIndex = 1, mode = CONTINUE_LINE) shouldBe "arg = None"
+        formatter.format(noNameNullAssignment, indentIndex = 1, mode = CONTINUE_LINE) shouldBe "None"
 
-        formatter.format(intAssignment, indentIndex = 1, mode = IndentMode.CONTINUE_LINE) shouldBe "arg = 42"
-        formatter.format(noNameIntAssignment, indentIndex = 1, mode = IndentMode.CONTINUE_LINE) shouldBe "42"
+        formatter.format(intAssignment, indentIndex = 1, mode = CONTINUE_LINE) shouldBe "arg = 42"
+        formatter.format(noNameIntAssignment, indentIndex = 1, mode = CONTINUE_LINE) shouldBe "42"
 
-        formatter.format(booleanAssignment, indentIndex = 1, mode = IndentMode.CONTINUE_LINE) shouldBe "arg = True"
-        formatter.format(noNameBooleanAssignment, indentIndex = 1, mode = IndentMode.CONTINUE_LINE) shouldBe "True"
+        formatter.format(booleanAssignment, indentIndex = 1, mode = CONTINUE_LINE) shouldBe "arg = True"
+        formatter.format(noNameBooleanAssignment, indentIndex = 1, mode = CONTINUE_LINE) shouldBe "True"
     }
 
     should("format single-line string assignment") {
@@ -195,16 +207,16 @@ class AssignmentFormatterTests : ShouldSpec({
         formatter.format(
             str,
             indentIndex = 1,
-            mode = IndentMode.NEW_LINE
+            mode = NEW_LINE
         ) shouldBe "${___4}arg = \"single-line string\""
         formatter.format(
             noNameStr,
             indentIndex = 1,
-            mode = IndentMode.NEW_LINE
+            mode = NEW_LINE
         ) shouldBe "${___4}\"single-line string\""
 
-        formatter.format(str, indentIndex = 1, mode = IndentMode.CONTINUE_LINE) shouldBe "arg = \"single-line string\""
-        formatter.format(noNameStr, indentIndex = 1, mode = IndentMode.CONTINUE_LINE) shouldBe "\"single-line string\""
+        formatter.format(str, indentIndex = 1, mode = CONTINUE_LINE) shouldBe "arg = \"single-line string\""
+        formatter.format(noNameStr, indentIndex = 1, mode = CONTINUE_LINE) shouldBe "\"single-line string\""
     }
 
     should("format multiline string assignment") {
@@ -224,10 +236,10 @@ class AssignmentFormatterTests : ShouldSpec({
 
         val formatter = newAssignmentFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
-        formatter.format(str, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}arg = $formattedStr"
-        formatter.format(noNameStr, indentIndex = 1, IndentMode.NEW_LINE) shouldBe "${___4}$formattedStr"
+        formatter.format(str, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = $formattedStr"
+        formatter.format(noNameStr, indentIndex = 1, NEW_LINE) shouldBe "${___4}$formattedStr"
 
-        formatter.format(str, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe "arg = $formattedStr"
-        formatter.format(noNameStr, indentIndex = 1, IndentMode.CONTINUE_LINE) shouldBe formattedStr
+        formatter.format(str, indentIndex = 1, CONTINUE_LINE) shouldBe "arg = $formattedStr"
+        formatter.format(noNameStr, indentIndex = 1, CONTINUE_LINE) shouldBe formattedStr
     }
 })

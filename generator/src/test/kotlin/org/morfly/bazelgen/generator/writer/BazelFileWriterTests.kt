@@ -5,7 +5,7 @@ import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
-import org.morfly.bazelgen.generator.buildfile.GenericBazelFile
+import org.morfly.bazelgen.generator.file.GenericBazelFile
 import org.morfly.bazelgen.generator.formatter.BazelFileFormatter
 import java.io.File
 

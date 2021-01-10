@@ -6,14 +6,14 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import org.morfly.bazelgen.generator.dsl.type.ListReference
-import org.morfly.bazelgen.generator.dsl.type.StringFunctionCall
+import org.morfly.bazelgen.generator.dsl.core.element.ListReference
+import org.morfly.bazelgen.generator.dsl.core.element.StringFunctionCall
 import org.morfly.bazelgen.generator.formatter.IndentMode.CONTINUE_LINE
 import org.morfly.bazelgen.generator.formatter.IndentMode.NEW_LINE
 
 
 class AssignmentFormatterTests : ShouldSpec({
-    val valueFormatter = mockk<ValueFormatter>()
+    val expressionFormatter = mockk<ExpressionFormatter>()
 
     val ___4 = " ".repeat(4)
     val _______8 = " ".repeat(8)
@@ -22,8 +22,8 @@ class AssignmentFormatterTests : ShouldSpec({
         val ref = "arg" to ListReference<String>(name = "TEST_VARIABLE")
         val noNameRef = "" to ref.second
 
-        every { valueFormatter(ref.second, indentIndex = 1, mode = CONTINUE_LINE) } returns "TEST_VARIABLE"
-        val formatter = AssignmentFormatter(valueFormatter)
+        every { expressionFormatter(ref.second, indentIndex = 1, mode = CONTINUE_LINE) } returns "TEST_VARIABLE"
+        val formatter = AssignmentFormatter(expressionFormatter)
 
         formatter.format(ref, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = TEST_VARIABLE"
         formatter.format(noNameRef, indentIndex = 1, NEW_LINE) shouldBe "${___4}TEST_VARIABLE"
@@ -36,8 +36,8 @@ class AssignmentFormatterTests : ShouldSpec({
         val list = "arg" to listOf("item1")
         val noNameList = "" to list.second
 
-        every { valueFormatter(list.second, indentIndex = 1, mode = CONTINUE_LINE) } returns "[\"item1\"]"
-        val formatter = AssignmentFormatter(valueFormatter)
+        every { expressionFormatter(list.second, indentIndex = 1, mode = CONTINUE_LINE) } returns "[\"item1\"]"
+        val formatter = AssignmentFormatter(expressionFormatter)
 
         formatter.format(list, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = [\"item1\"]"
         formatter.format(noNameList, indentIndex = 1, NEW_LINE) shouldBe "${___4}[\"item1\"]"
@@ -57,8 +57,8 @@ class AssignmentFormatterTests : ShouldSpec({
                 |$___4]
             """.trimMargin()
 
-        every { valueFormatter(list.second, indentIndex = 1, mode = CONTINUE_LINE) } returns formattedList
-        val formatter = AssignmentFormatter(valueFormatter)
+        every { expressionFormatter(list.second, indentIndex = 1, mode = CONTINUE_LINE) } returns formattedList
+        val formatter = AssignmentFormatter(expressionFormatter)
 
         formatter.format(list, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = $formattedList"
         formatter.format(noNameList, indentIndex = 1, NEW_LINE) shouldBe "${___4}$formattedList"
@@ -77,8 +77,8 @@ class AssignmentFormatterTests : ShouldSpec({
             |$___4)
         """.trimMargin()
 
-        every { valueFormatter(func.second, indentIndex = 1, mode = CONTINUE_LINE) } returns formattedFunc
-        val formatter = AssignmentFormatter(valueFormatter)
+        every { expressionFormatter(func.second, indentIndex = 1, mode = CONTINUE_LINE) } returns formattedFunc
+        val formatter = AssignmentFormatter(expressionFormatter)
 
         formatter.format(func, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = $formattedFunc"
         formatter.format(noNameFunc, indentIndex = 1, NEW_LINE) shouldBe "${___4}$formattedFunc"
@@ -98,8 +98,8 @@ class AssignmentFormatterTests : ShouldSpec({
             |$___4)
         """.trimMargin()
 
-        every { valueFormatter(func.second, indentIndex = 1, mode = CONTINUE_LINE) } returns formattedFunc
-        val formatter = AssignmentFormatter(valueFormatter)
+        every { expressionFormatter(func.second, indentIndex = 1, mode = CONTINUE_LINE) } returns formattedFunc
+        val formatter = AssignmentFormatter(expressionFormatter)
 
         formatter.format(func, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = $formattedFunc"
         formatter.format(noNameFunc, indentIndex = 1, NEW_LINE) shouldBe "${___4}$formattedFunc"
@@ -116,8 +116,8 @@ class AssignmentFormatterTests : ShouldSpec({
             {"param1": "value1"}
         """.trimIndent()
 
-        every { valueFormatter(dict.second, indentIndex = 1, mode = CONTINUE_LINE) } returns formattedDict
-        val formatter = AssignmentFormatter(valueFormatter)
+        every { expressionFormatter(dict.second, indentIndex = 1, mode = CONTINUE_LINE) } returns formattedDict
+        val formatter = AssignmentFormatter(expressionFormatter)
 
         formatter.format(dict, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = $formattedDict"
         formatter.format(noNameDict, indentIndex = 1, NEW_LINE) shouldBe "${___4}$formattedDict"
@@ -137,8 +137,8 @@ class AssignmentFormatterTests : ShouldSpec({
             |$___4}
         """.trimMargin()
 
-        every { valueFormatter(dict.second, indentIndex = 1, mode = CONTINUE_LINE) } returns formattedDict
-        val formatter = AssignmentFormatter(valueFormatter)
+        every { expressionFormatter(dict.second, indentIndex = 1, mode = CONTINUE_LINE) } returns formattedDict
+        val formatter = AssignmentFormatter(expressionFormatter)
 
         formatter.format(dict, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = $formattedDict"
         formatter.format(noNameDict, indentIndex = 1, NEW_LINE) shouldBe "${___4}$formattedDict"
@@ -148,10 +148,10 @@ class AssignmentFormatterTests : ShouldSpec({
     }
 
     should("format literals assignment") {
-        every { valueFormatter(null, indentIndex = 1, mode = CONTINUE_LINE) } returns "None"
-        every { valueFormatter(42, indentIndex = 1, mode = CONTINUE_LINE) } returns "42"
-        every { valueFormatter(true, indentIndex = 1, mode = CONTINUE_LINE) } returns "True"
-        val formatter = AssignmentFormatter(valueFormatter)
+        every { expressionFormatter(null, indentIndex = 1, mode = CONTINUE_LINE) } returns "None"
+        every { expressionFormatter(42, indentIndex = 1, mode = CONTINUE_LINE) } returns "42"
+        every { expressionFormatter(true, indentIndex = 1, mode = CONTINUE_LINE) } returns "True"
+        val formatter = AssignmentFormatter(expressionFormatter)
 
         val nullAssignment = "arg" to null
         val noNameNullAssignment = "" to null
@@ -183,8 +183,14 @@ class AssignmentFormatterTests : ShouldSpec({
     }
 
     should("format single-line string assignment") {
-        every { valueFormatter("single-line string", indentIndex = 1, mode = any()) } returns "\"single-line string\""
-        val formatter = AssignmentFormatter(valueFormatter)
+        every {
+            expressionFormatter(
+                "single-line string",
+                indentIndex = 1,
+                mode = any()
+            )
+        } returns "\"single-line string\""
+        val formatter = AssignmentFormatter(expressionFormatter)
 
         val str = "arg" to "single-line string"
         val noNameStr = "" to "single-line string"
@@ -212,9 +218,9 @@ class AssignmentFormatterTests : ShouldSpec({
             |$___4$quote
         """.trimMargin()
 
-        every { valueFormatter(str.second, indentIndex = 1, mode = any()) } returns formattedStr
+        every { expressionFormatter(str.second, indentIndex = 1, mode = any()) } returns formattedStr
 
-        val formatter = AssignmentFormatter(valueFormatter)
+        val formatter = AssignmentFormatter(expressionFormatter)
 
         formatter.format(str, indentIndex = 1, NEW_LINE) shouldBe "${___4}arg = $formattedStr"
         formatter.format(noNameStr, indentIndex = 1, NEW_LINE) shouldBe "${___4}$formattedStr"

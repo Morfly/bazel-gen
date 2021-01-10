@@ -7,7 +7,7 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import org.morfly.bazelgen.generator.dsl.type.StringFunctionCall
+import org.morfly.bazelgen.generator.dsl.core.element.StringFunctionCall
 import org.morfly.bazelgen.generator.formatter.IndentMode.CONTINUE_LINE
 import org.morfly.bazelgen.generator.formatter.IndentMode.NEW_LINE
 

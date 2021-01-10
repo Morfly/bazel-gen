@@ -7,27 +7,34 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import org.morfly.bazelgen.generator.buildfile.ComprehensionStatement
-import org.morfly.bazelgen.generator.buildfile.ComprehensionType.DICT
-import org.morfly.bazelgen.generator.buildfile.ComprehensionType.LIST
-import org.morfly.bazelgen.generator.buildfile.EmptyLineStatement
-import org.morfly.bazelgen.generator.buildfile.FunctionStatement
-import org.morfly.bazelgen.generator.buildfile.RawTextStatement
-import org.morfly.bazelgen.generator.dsl.type.ListReference
-import org.morfly.bazelgen.generator.dsl.type.StringReference
+import org.morfly.bazelgen.generator.dsl.core.ExpressionStatement
+import org.morfly.bazelgen.generator.dsl.core.RawTextStatement
+import org.morfly.bazelgen.generator.dsl.core.WhiteSpaceStatement
+import org.morfly.bazelgen.generator.dsl.core.element.Comprehension
+import org.morfly.bazelgen.generator.dsl.core.element.ComprehensionType.DICT
+import org.morfly.bazelgen.generator.dsl.core.element.ComprehensionType.LIST
+import org.morfly.bazelgen.generator.dsl.core.element.ListReference
+import org.morfly.bazelgen.generator.dsl.core.element.StringReference
+import org.morfly.bazelgen.generator.dsl.core.element.VoidFunctionCall
 import org.morfly.bazelgen.generator.formatter.IndentMode.CONTINUE_LINE
 import org.morfly.bazelgen.generator.formatter.IndentMode.NEW_LINE
 
 
 class ComprehensionFormatterTests : ShouldSpec({
-    val valueFormatter = mockk<ValueFormatter>()
+    val expressionFormatter = mockk<ExpressionFormatter>()
     val statementFormatter = mockk<BuildStatementFormatter>()
 
-    should("fail if dependencies are not initialized") {
-        val formatter = ComprehensionFormatter(valueFormatter)
+    context("validation") {
+        should("fail if dependencies are not initialized") {
+            val formatter = ComprehensionFormatter()
 
-        shouldThrow<IllegalArgumentException> {
-            formatter.format(mockk(), indentIndex = 0, mode = NEW_LINE)
+            shouldThrow<IllegalArgumentException> {
+                formatter.validate(mockk(), indentIndex = 0, mode = NEW_LINE)
+            }
+
+            shouldThrow<IllegalArgumentException> {
+                formatter.format(mockk(), indentIndex = 0, mode = NEW_LINE)
+            }
         }
     }
 
@@ -47,15 +54,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns "$_______8${innerStatement.text}"
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter).apply {
+                val formatter = ComprehensionFormatter().apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef
                 )
 
@@ -77,15 +85,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns "$_______8${innerStatement.text}"
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter).apply {
+                val formatter = ComprehensionFormatter().apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = DICT, statement = innerStatement,
+                val comp = Comprehension(
+                    type = DICT, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef
                 )
 
@@ -100,15 +109,17 @@ class ComprehensionFormatterTests : ShouldSpec({
             }
 
             should("format with 'FunctionStatement'") {
-                val innerStatement = FunctionStatement(
-                    "genrule", mapOf(
-                        "name" to "\"update_\" + file[0:-3]",
-                        "srcs" to listOf(StringReference("file")),
-                        "outs" to listOf("file[0:-3] + \"_updated.kt\""),
-                        "cmd" to """
+                val innerStatement = ExpressionStatement(
+                    VoidFunctionCall(
+                        "genrule", mapOf(
+                            "name" to "\"update_\" + file[0:-3]",
+                            "srcs" to listOf(StringReference("file")),
+                            "outs" to listOf("file[0:-3] + \"_updated.kt\""),
+                            "cmd" to """
                             cat $(SRCS) |
                             sed 's/import org.morfly.android.R/import org.morfly.android.app.view_models.R/g' > $(OUTS)
                         """.trimIndent()
+                        )
                     )
                 )
                 val listRef = ListReference<String>("VIEW_MODELS_WITH_RESOURCE_IMPORTS")
@@ -128,15 +139,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     *${___4})
                 """.trimMargin("*")
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter).apply {
+                val formatter = ComprehensionFormatter().apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "file", `in` = listRef
                 )
 
@@ -159,22 +171,23 @@ class ComprehensionFormatterTests : ShouldSpec({
             }
 
             should("format with 'EmptyLineStatement'") {
-                val innerStatement = EmptyLineStatement
+                val innerStatement = WhiteSpaceStatement
                 val listRef = ListReference<String>("VIEW_MODELS_WITH_RESOURCE_IMPORTS")
 
                 every {
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns "\n"
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter).apply {
+                val formatter = ComprehensionFormatter().apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef
                 )
 
@@ -201,15 +214,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns "$_______8${innerStatement.text}"
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter).apply {
+                val formatter = ComprehensionFormatter().apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef, `if` = "file not None"
                 )
 
@@ -233,15 +247,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns innerStatement.text
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter, indentSize = 0).apply {
+                val formatter = ComprehensionFormatter(indentSize = 0).apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef
                 )
 
@@ -263,15 +278,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns innerStatement.text
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter, indentSize = 0).apply {
+                val formatter = ComprehensionFormatter(indentSize = 0).apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = DICT, statement = innerStatement,
+                val comp = Comprehension(
+                    type = DICT, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef
                 )
 
@@ -286,15 +302,17 @@ class ComprehensionFormatterTests : ShouldSpec({
             }
 
             should("format with 'FunctionStatement'") {
-                val innerStatement = FunctionStatement(
-                    "genrule", mapOf(
-                        "name" to "\"update_\" + file[0:-3]",
-                        "srcs" to listOf(StringReference("file")),
-                        "outs" to listOf("file[0:-3] + \"_updated.kt\""),
-                        "cmd" to """
+                val innerStatement = ExpressionStatement(
+                    VoidFunctionCall(
+                        "genrule", mapOf(
+                            "name" to "\"update_\" + file[0:-3]",
+                            "srcs" to listOf(StringReference("file")),
+                            "outs" to listOf("file[0:-3] + \"_updated.kt\""),
+                            "cmd" to """
                             cat $(SRCS) |
                             sed 's/import org.morfly.android.R/import org.morfly.android.app.view_models.R/g' > $(OUTS)
                         """.trimIndent()
+                        )
                     )
                 )
                 val listRef = ListReference<String>("VIEW_MODELS_WITH_RESOURCE_IMPORTS")
@@ -314,15 +332,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     *)
                 """.trimMargin("*")
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter, indentSize = 0).apply {
+                val formatter = ComprehensionFormatter(indentSize = 0).apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "file", `in` = listRef
                 )
 
@@ -345,22 +364,23 @@ class ComprehensionFormatterTests : ShouldSpec({
             }
 
             should("format with 'EmptyLineStatement'") {
-                val innerStatement = EmptyLineStatement
+                val innerStatement = WhiteSpaceStatement
                 val listRef = ListReference<String>("VIEW_MODELS_WITH_RESOURCE_IMPORTS")
 
                 every {
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns "\n"
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter, indentSize = 0).apply {
+                val formatter = ComprehensionFormatter(indentSize = 0).apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef
                 )
 
@@ -387,15 +407,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns innerStatement.text
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter, indentSize = 0).apply {
+                val formatter = ComprehensionFormatter(indentSize = 0).apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef, `if` = "file not None"
                 )
 
@@ -427,15 +448,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns "$_______8${innerStatement.text}"
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter).apply {
+                val formatter = ComprehensionFormatter().apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef
                 )
 
@@ -457,15 +479,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns "$_______8${innerStatement.text}"
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter).apply {
+                val formatter = ComprehensionFormatter().apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = DICT, statement = innerStatement,
+                val comp = Comprehension(
+                    type = DICT, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef
                 )
 
@@ -480,15 +503,17 @@ class ComprehensionFormatterTests : ShouldSpec({
             }
 
             should("format with 'FunctionStatement'") {
-                val innerStatement = FunctionStatement(
-                    "genrule", mapOf(
-                        "name" to "\"update_\" + file[0:-3]",
-                        "srcs" to listOf(StringReference("file")),
-                        "outs" to listOf("file[0:-3] + \"_updated.kt\""),
-                        "cmd" to """
+                val innerStatement = ExpressionStatement(
+                    VoidFunctionCall(
+                        "genrule", mapOf(
+                            "name" to "\"update_\" + file[0:-3]",
+                            "srcs" to listOf(StringReference("file")),
+                            "outs" to listOf("file[0:-3] + \"_updated.kt\""),
+                            "cmd" to """
                             cat $(SRCS) |
                             sed 's/import org.morfly.android.R/import org.morfly.android.app.view_models.R/g' > $(OUTS)
                         """.trimIndent()
+                        )
                     )
                 )
                 val listRef = ListReference<String>("VIEW_MODELS_WITH_RESOURCE_IMPORTS")
@@ -508,15 +533,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     *${_______8})
                 """.trimMargin("*")
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter).apply {
+                val formatter = ComprehensionFormatter().apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "file", `in` = listRef
                 )
 
@@ -539,22 +565,23 @@ class ComprehensionFormatterTests : ShouldSpec({
             }
 
             should("format with 'EmptyLineStatement'") {
-                val innerStatement = EmptyLineStatement
+                val innerStatement = WhiteSpaceStatement
                 val listRef = ListReference<String>("VIEW_MODELS_WITH_RESOURCE_IMPORTS")
 
                 every {
                     statementFormatter(innerStatement, indentIndex = 2, mode = CONTINUE_LINE)
                 } returns "\n"
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter).apply {
+                val formatter = ComprehensionFormatter().apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef
                 )
 
@@ -582,15 +609,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                 } returns "$_______8${innerStatement.text}"
 
                 every {
-                    valueFormatter(listRef, indentIndex = 0, mode = CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, mode = CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter).apply {
+                val formatter = ComprehensionFormatter().apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef, `if` = "file not None"
                 )
 
@@ -614,15 +642,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns innerStatement.text
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter, indentSize = 0).apply {
+                val formatter = ComprehensionFormatter(indentSize = 0).apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef
                 )
 
@@ -644,15 +673,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns innerStatement.text
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter, indentSize = 0).apply {
+                val formatter = ComprehensionFormatter(indentSize = 0).apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = DICT, statement = innerStatement,
+                val comp = Comprehension(
+                    type = DICT, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef
                 )
 
@@ -667,15 +697,17 @@ class ComprehensionFormatterTests : ShouldSpec({
             }
 
             should("format with 'FunctionStatement'") {
-                val innerStatement = FunctionStatement(
-                    "genrule", mapOf(
-                        "name" to "\"update_\" + file[0:-3]",
-                        "srcs" to listOf(StringReference("file")),
-                        "outs" to listOf("file[0:-3] + \"_updated.kt\""),
-                        "cmd" to """
+                val innerStatement = ExpressionStatement(
+                    VoidFunctionCall(
+                        "genrule", mapOf(
+                            "name" to "\"update_\" + file[0:-3]",
+                            "srcs" to listOf(StringReference("file")),
+                            "outs" to listOf("file[0:-3] + \"_updated.kt\""),
+                            "cmd" to """
                             cat $(SRCS) |
                             sed 's/import org.morfly.android.R/import org.morfly.android.app.view_models.R/g' > $(OUTS)
                         """.trimIndent()
+                        )
                     )
                 )
                 val listRef = ListReference<String>("VIEW_MODELS_WITH_RESOURCE_IMPORTS")
@@ -695,15 +727,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     *)
                 """.trimMargin("*")
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter, indentSize = 0).apply {
+                val formatter = ComprehensionFormatter(indentSize = 0).apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "file", `in` = listRef
                 )
 
@@ -726,22 +759,23 @@ class ComprehensionFormatterTests : ShouldSpec({
             }
 
             should("format with 'EmptyLineStatement'") {
-                val innerStatement = EmptyLineStatement
+                val innerStatement = WhiteSpaceStatement
                 val listRef = ListReference<String>("VIEW_MODELS_WITH_RESOURCE_IMPORTS")
 
                 every {
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns "\n"
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter, indentSize = 0).apply {
+                val formatter = ComprehensionFormatter(indentSize = 0).apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef
                 )
 
@@ -768,15 +802,16 @@ class ComprehensionFormatterTests : ShouldSpec({
                     statementFormatter(innerStatement, indentIndex = 2, mode = NEW_LINE)
                 } returns innerStatement.text
                 every {
-                    valueFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
+                    expressionFormatter(listRef, indentIndex = 0, CONTINUE_LINE)
                 } returns "VIEW_MODELS_WITH_RESOURCE_IMPORTS"
 
-                val formatter = ComprehensionFormatter(valueFormatter, indentSize = 0).apply {
+                val formatter = ComprehensionFormatter(indentSize = 0).apply {
+                    this.expressionFormatter = expressionFormatter
                     this.statementFormatter = statementFormatter
                 }
 
-                val comp = ComprehensionStatement(
-                    type = LIST, statement = innerStatement,
+                val comp = Comprehension(
+                    type = LIST, expression = innerStatement,
                     `for` = "view_models_with_resource_imports", `in` = listRef, `if` = "file not None"
                 )
 

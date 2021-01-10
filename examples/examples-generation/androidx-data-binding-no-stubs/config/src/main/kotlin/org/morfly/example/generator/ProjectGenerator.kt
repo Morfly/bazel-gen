@@ -18,7 +18,7 @@ private const val ROOT_PACKAGE_NAME = "org.morfly.bazelgen.example"
 /**
  *
  */
-class ProjectGenerator() {
+class ProjectGenerator {
 
     private val internalDeps = LinkedList<String>()
 

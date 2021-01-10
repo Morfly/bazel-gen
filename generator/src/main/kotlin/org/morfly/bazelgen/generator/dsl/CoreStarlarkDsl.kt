@@ -2,12 +2,13 @@
 
 package org.morfly.bazelgen.generator.dsl
 
-import org.morfly.bazelgen.generator.buildfile.*
-import org.morfly.bazelgen.generator.buildfile.ComprehensionType.DICT
-import org.morfly.bazelgen.generator.buildfile.ComprehensionType.LIST
+import org.morfly.bazelgen.generator.dsl.core.*
+import org.morfly.bazelgen.generator.dsl.core.element.*
+import org.morfly.bazelgen.generator.dsl.core.element.ComprehensionType.DICT
+import org.morfly.bazelgen.generator.dsl.core.element.ComprehensionType.LIST
 import org.morfly.bazelgen.generator.dsl.feature.*
-import org.morfly.bazelgen.generator.dsl.type.DictionaryReference
-import org.morfly.bazelgen.generator.dsl.type.Reference
+import org.morfly.bazelgen.generator.file.BazelBuild
+import org.morfly.bazelgen.generator.file.BazelWorkspace
 
 
 /**
@@ -19,7 +20,7 @@ internal annotation class StarlarkFeatureContext
 /**
  *
  */
-interface StarlarkLanguageFeature
+interface StarlarkDslFeature
 
 
 /**
@@ -27,7 +28,7 @@ interface StarlarkLanguageFeature
  */
 abstract class StarlarkContext : RawTextFeature, QuotingFeature, AssignmentsFeature, VisibilityFeature, LoadFeature,
     CollectionsFeature, ComprehensionsFeature, StatementConcatenationFeature, FormattingFeature, ReferencesFeature,
-    FunctionsFeature {
+    FunctionsFeature, WhiteSpacesFeature {
 
     protected val statementsHolder = mutableListOf<BuildStatement>()
 
@@ -48,73 +49,99 @@ abstract class StarlarkContext : RawTextFeature, QuotingFeature, AssignmentsFeat
 
     // region AssignmentsFeature
     override fun String.`=`(value: Any): AssignmentStatement<Any> =
-        this assign value
+        AssignmentStatement(this, value)
+            .also(statementsHolder::add)
 
     override fun <T> String.`=`(value: List<T>): AssignmentStatement<List<T>> =
-        this assign value
+        AssignmentStatement(this, value)
+            .also(statementsHolder::add)
 
     override fun String.`=`(body: DictionaryContext.() -> Unit): AssignmentStatement<Map<String, Any?>> =
-        this assign
-                // TODO document workaround description
-                if (body is Reference) DictionaryReference(body.name)
-                else DictionaryContext().apply(body).kwargs
-
-
-    private infix fun <V> String.assign(value: V): AssignmentStatement<V> =
-        AssignmentStatement(this, value).also(statementsHolder::add)
+        AssignmentStatement(
+            this,
+            // TODO document workaround description
+            if (body is Reference) DictionaryReference(body.name)
+            else DictionaryContext().apply(body).kwargs
+        ).also(statementsHolder::add)
     // endregion
 
     // region ComprehensionsFeature
     override fun BuildStatement.invoke(
         `for`: String, `in`: Any, `if`: String?, dict: DictComprehensionIdentifier
-    ): ComprehensionStatement {
+    ): ExpressionStatement<Comprehension> {
         statementsHolder.remove(this)
-        return ComprehensionStatement(
-            type = if (dict != null) DICT else LIST,
-            statement = this,
-            `for`, `in`, `if`
+        return ExpressionStatement(
+            Comprehension(
+                type = if (dict != null) DICT else LIST,
+                expression = this,
+                `for`, `in`, `if`
+            )
         ).also(statementsHolder::add)
     }
     // endregion
 
     // region FunctionsFeature
-    override fun String.invoke(body: FunctionCallContext.() -> Unit): FunctionStatement =
-        FunctionStatement(this, FunctionCallContext().apply(body).kwargs)
-            .also(statementsHolder::add)
+    override fun String.invoke(body: FunctionCallContext.() -> Unit): ExpressionStatement<FunctionCall> =
+        functionCallStatement(this, FunctionCallContext().apply(body).kwargs)
+
 
     internal fun <T : FunctionCallContext> functionCallStatement(
         name: String, context: T, body: T.() -> Unit
-    ): FunctionStatement = functionCallStatement(name, context.apply(body).kwargs)
+    ): ExpressionStatement<FunctionCall> =
+        functionCallStatement(name, context.apply(body).kwargs)
 
-    internal fun functionCallStatement(function: FunctionCall): FunctionStatement =
+    internal fun functionCallStatement(function: FunctionCall): ExpressionStatement<FunctionCall> =
         functionCallStatement(function.name, function.args)
 
-    internal fun functionCallStatement(name: String, args: Map<String, Any?>): FunctionStatement =
-        FunctionStatement(name, args).also(statementsHolder::add)
+    internal fun functionCallStatement(name: String, args: Map<String, Any?>): ExpressionStatement<FunctionCall> =
+        ExpressionStatement(VoidFunctionCall(name, args)).also(statementsHolder::add)
     // endregion
 
     // region LoadFeature
-    override fun load(file: String, vararg rules: CharSequence) {
-        statementsHolder.add(
-            LoadStatement(file, rules.map { it.toString() }.toList())
-        )
-    }
+    override fun load(file: String, vararg rules: CharSequence) =
+        LoadStatement(file, rules.associateBy({ it.toString() }, { null }))
+            .also(statementsHolder::add)
+
     // endregion
 
     // region ConcatenationsFeature
-    override fun <T> AssignmentStatement<T>.`+`(other: Any?): ConcatenationStatement {
+    override fun AssignmentStatement<CharSequence>.`+`(other: CharSequence?): AssignmentStatement<CharSequence> {
         statementsHolder.remove(this)
-        if (other is BuildStatement) statementsHolder.remove(other)
-        return ConcatenationStatement(this, "+", other)
-            .also(statementsHolder::add)
+        return AssignmentStatement(
+            name = name,
+            value = StringConcatenation(value, "+", other)
+        ).also(statementsHolder::add)
     }
 
-    override fun ConcatenationStatement.`+`(other: Any?): ConcatenationStatement {
+    override fun <T> AssignmentStatement<List<T>>.`+`(other: List<T>?): AssignmentStatement<List<T>> {
         statementsHolder.remove(this)
-        if (other is BuildStatement) statementsHolder.remove(other)
-        return ConcatenationStatement(this, "+", other)
-            .also(statementsHolder::add)
+        return AssignmentStatement(
+            name = name,
+            value = ListConcatenation(value, "+", other)
+        ).also(statementsHolder::add)
     }
+
+    override fun AssignmentStatement<Map<String, Any?>>.`+`(other: Map<String, Any?>?): AssignmentStatement<Map<String, Any?>> {
+        statementsHolder.remove(this)
+        return AssignmentStatement(
+            name = name,
+            value = DictionaryConcatenation(value, "+", other)
+        ).also(statementsHolder::add)
+    }
+
+    override fun <T> AssignmentStatement<T>.`+`(other: ExpressionStatement<T>): AssignmentStatement<Concatenation<T?, T?>> {
+        statementsHolder.remove(this)
+        statementsHolder.remove(other)
+        return AssignmentStatement(
+            name = name,
+            value = AnyConcatenation(value, "+", other.expression)
+        ).also(statementsHolder::add)
+    }
+    // endregion
+
+    // region WhiteSpacesFeature
+    override val space
+        get() = WhiteSpaceStatement.also(statementsHolder::add)
     // endregion
 }
 

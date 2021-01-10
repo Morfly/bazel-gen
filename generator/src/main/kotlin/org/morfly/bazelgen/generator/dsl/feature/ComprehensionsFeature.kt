@@ -1,10 +1,10 @@
 package org.morfly.bazelgen.generator.dsl.feature
 
-import org.morfly.bazelgen.generator.buildfile.BuildStatement
-import org.morfly.bazelgen.generator.buildfile.ComprehensionStatement
-import org.morfly.bazelgen.generator.buildfile.ExpressionStatement
-import org.morfly.bazelgen.generator.buildfile.RawTextStatement
-import org.morfly.bazelgen.generator.dsl.StarlarkLanguageFeature
+
+import org.morfly.bazelgen.generator.dsl.StarlarkDslFeature
+import org.morfly.bazelgen.generator.dsl.core.BuildStatement
+import org.morfly.bazelgen.generator.dsl.core.ExpressionStatement
+import org.morfly.bazelgen.generator.dsl.core.element.Comprehension
 
 
 /**
@@ -16,7 +16,7 @@ internal typealias DictComprehensionIdentifier = (() -> Unit)?
 /**
  *
  */
-internal interface ComprehensionsFeature : StarlarkLanguageFeature {
+internal interface ComprehensionsFeature : StarlarkDslFeature {
 
     /**
      *
@@ -24,8 +24,7 @@ internal interface ComprehensionsFeature : StarlarkLanguageFeature {
     operator fun CharSequence.invoke(
         `for`: String, `in`: Any, `if`: String? = null,
         dict: DictComprehensionIdentifier = null
-    ): ComprehensionStatement =
-        ExpressionStatement(this)(`for`, `in`, `if`, dict)
+    ) = ExpressionStatement(this)(`for`, `in`, `if`, dict)
 
 
     /**
@@ -34,5 +33,5 @@ internal interface ComprehensionsFeature : StarlarkLanguageFeature {
     operator fun BuildStatement.invoke(
         `for`: String, `in`: Any, `if`: String? = null,
         dict: DictComprehensionIdentifier = null
-    ): ComprehensionStatement
+    ): ExpressionStatement<Comprehension>
 }

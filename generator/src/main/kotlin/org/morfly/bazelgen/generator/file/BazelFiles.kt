@@ -1,6 +1,8 @@
-package org.morfly.bazelgen.generator.buildfile
+package org.morfly.bazelgen.generator.file
 
 import org.morfly.bazelgen.descriptor.RelativePath
+import org.morfly.bazelgen.generator.dsl.core.BuildStatement
+import org.morfly.bazelgen.generator.dsl.core.RawTextStatement
 
 
 /**

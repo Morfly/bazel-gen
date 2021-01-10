@@ -1,6 +1,6 @@
 package org.morfly.bazelgen.generator.dsl
 
-import org.morfly.bazelgen.generator.buildfile.BazelVersion
+import org.morfly.bazelgen.generator.file.BazelVersion
 
 
 /**

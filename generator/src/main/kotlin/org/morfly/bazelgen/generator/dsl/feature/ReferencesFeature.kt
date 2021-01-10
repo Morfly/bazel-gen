@@ -3,17 +3,17 @@
 package org.morfly.bazelgen.generator.dsl.feature
 
 import org.morfly.bazelgen.generator.dsl.Label
-import org.morfly.bazelgen.generator.dsl.StarlarkLanguageFeature
-import org.morfly.bazelgen.generator.dsl.type.AnyReference
-import org.morfly.bazelgen.generator.dsl.type.DictionaryReference
-import org.morfly.bazelgen.generator.dsl.type.ListReference
-import org.morfly.bazelgen.generator.dsl.type.StringReference
+import org.morfly.bazelgen.generator.dsl.StarlarkDslFeature
+import org.morfly.bazelgen.generator.dsl.core.element.AnyReference
+import org.morfly.bazelgen.generator.dsl.core.element.DictionaryReference
+import org.morfly.bazelgen.generator.dsl.core.element.ListReference
+import org.morfly.bazelgen.generator.dsl.core.element.StringReference
 
 
 /**
  *
  */
-interface ReferencesFeature : StarlarkLanguageFeature {
+interface ReferencesFeature : StarlarkDslFeature {
 
     /**
      *

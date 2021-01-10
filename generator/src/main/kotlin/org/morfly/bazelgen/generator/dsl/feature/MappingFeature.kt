@@ -1,13 +1,13 @@
 package org.morfly.bazelgen.generator.dsl.feature
 
 import org.morfly.bazelgen.generator.dsl.StarlarkFeatureContext
-import org.morfly.bazelgen.generator.dsl.StarlarkLanguageFeature
+import org.morfly.bazelgen.generator.dsl.StarlarkDslFeature
 
 
 /**
  *
  */
-internal interface MappingFeature : StarlarkLanguageFeature {
+internal interface MappingFeature : StarlarkDslFeature {
 
     /**
      *

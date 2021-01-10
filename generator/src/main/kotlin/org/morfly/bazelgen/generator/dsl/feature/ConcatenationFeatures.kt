@@ -2,56 +2,53 @@
 
 package org.morfly.bazelgen.generator.dsl.feature
 
-import org.morfly.bazelgen.generator.buildfile.AssignmentStatement
-import org.morfly.bazelgen.generator.buildfile.ConcatenationStatement
-import org.morfly.bazelgen.generator.dsl.StarlarkLanguageFeature
-import org.morfly.bazelgen.generator.dsl.type.DictionaryConcatenatedValue
-import org.morfly.bazelgen.generator.dsl.type.ListConcatenatedValue
-import org.morfly.bazelgen.generator.dsl.type.StringConcatenatedValue
-import org.morfly.bazelgen.generator.dsl.type.ValueAssignment
+import org.morfly.bazelgen.generator.dsl.StarlarkDslFeature
+import org.morfly.bazelgen.generator.dsl.core.AssignmentStatement
+import org.morfly.bazelgen.generator.dsl.core.ExpressionStatement
+import org.morfly.bazelgen.generator.dsl.core.element.*
 
 
 /**
  *
  */
-internal interface BaseConcatenationFeature : StarlarkLanguageFeature {
+internal interface BaseConcatenationFeature : StarlarkDslFeature {
 
     /**
      *
      */
     infix fun CharSequence.`+`(other: CharSequence?): CharSequence =
-        StringConcatenatedValue(this, "+", other)
+        StringConcatenation(this, "+", other)
 
     /**
      *
      */
     infix fun <T> List<T>.`+`(other: List<T>?): List<T> =
-        ListConcatenatedValue(this, "+", other)
+        ListConcatenation(this, "+", other)
 
     /**
      *
      */
     infix fun Map<String, Any?>.`+`(other: Map<String, Any?>?): Map<String, Any?> =
-        DictionaryConcatenatedValue(this, "+", other)
+        DictionaryConcatenation(this, "+", other)
 
 
     /**
      *
      */
-    infix fun StringConcatenatedValue.`+`(other: CharSequence?): CharSequence =
-        StringConcatenatedValue(this, "+", other)
+    infix fun StringConcatenation.`+`(other: CharSequence?): CharSequence =
+        StringConcatenation(this, "+", other)
 
     /**
      *
      */
-    infix fun <T> ListConcatenatedValue<T>.`+`(other: List<T>?): List<T> =
-        ListConcatenatedValue(this, "+", other)
+    infix fun <T> ListConcatenation<T>.`+`(other: List<T>?): List<T> =
+        ListConcatenation(this, "+", other)
 
     /**
      *
      */
-    infix fun DictionaryConcatenatedValue.`+`(other: Map<String, Any?>?): Map<String, Any?> =
-        DictionaryConcatenatedValue(this, "+", other)
+    infix fun DictionaryConcatenation.`+`(other: Map<String, Any?>?): Map<String, Any?> =
+        DictionaryConcatenation(this, "+", other)
 }
 
 
@@ -64,12 +61,22 @@ internal interface StatementConcatenationFeature : BaseConcatenationFeature {
     /**
      *
      */
-    infix fun <T> AssignmentStatement<T>.`+`(other: Any?): ConcatenationStatement
+    infix fun AssignmentStatement<CharSequence>.`+`(other: CharSequence?): AssignmentStatement<CharSequence>
 
     /**
      *
      */
-    infix fun ConcatenationStatement.`+`(other: Any?): ConcatenationStatement
+    infix fun <T> AssignmentStatement<List<T>>.`+`(other: List<T>?): AssignmentStatement<List<T>>
+
+    /**
+     *
+     */
+    infix fun AssignmentStatement<Map<String, Any?>>.`+`(other: Map<String, Any?>?): AssignmentStatement<Map<String, Any?>>
+
+    /**
+     *
+     */
+    infix fun <T> AssignmentStatement<T>.`+`(other: ExpressionStatement<T>): AssignmentStatement<Concatenation<T?, T?>>
 }
 
 /**
@@ -80,15 +87,15 @@ internal interface ArgumentConcatenationFeature : BaseConcatenationFeature {
     /**
      *
      */
-    infix fun ValueAssignment<CharSequence>.`+`(other: CharSequence?): CharSequence
+    infix fun ExpressionAssignment<CharSequence>.`+`(other: CharSequence?): CharSequence
 
     /**
      *
      */
-    infix fun <T> ValueAssignment<List<T>>.`+`(other: List<T>?): List<T>
+    infix fun <T> ExpressionAssignment<List<T>>.`+`(other: List<T>?): List<T>
 
     /**
      *
      */
-    infix fun ValueAssignment<Map<String, Any?>>.`+`(other: Map<String, Any?>?): Map<String, Any?>
+    infix fun ExpressionAssignment<Map<String, Any?>>.`+`(other: Map<String, Any?>?): Map<String, Any?>
 }

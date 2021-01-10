@@ -1,11 +1,10 @@
-package org.morfly.bazelgen.generator.type
+package org.morfly.bazelgen.generator.dsl.core.element
 
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
 import org.morfly.bazelgen.generator.dsl.feature.ref
-import org.morfly.bazelgen.generator.dsl.type.*
 
 
 class ReferencesTests : ShouldSpec({

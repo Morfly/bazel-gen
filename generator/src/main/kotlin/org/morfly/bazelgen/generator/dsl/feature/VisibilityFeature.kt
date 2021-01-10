@@ -3,13 +3,13 @@
 package org.morfly.bazelgen.generator.dsl.feature
 
 import org.morfly.bazelgen.generator.dsl.Label
-import org.morfly.bazelgen.generator.dsl.StarlarkLanguageFeature
+import org.morfly.bazelgen.generator.dsl.StarlarkDslFeature
 
 
 /**
  *
  */
-internal interface VisibilityFeature : StarlarkLanguageFeature {
+internal interface VisibilityFeature : StarlarkDslFeature {
 
     /**
      *
@@ -34,5 +34,4 @@ internal interface VisibilityFeature : StarlarkLanguageFeature {
      */
     val __subpackages__: Label
         get() = "__subpackages__"
-
 }

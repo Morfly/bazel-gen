@@ -2,9 +2,9 @@
 
 package org.morfly.bazelgen.generator.dsl
 
-import org.morfly.bazelgen.generator.buildfile.BazelRc
-import org.morfly.bazelgen.generator.buildfile.BazelRcStatement
-import org.morfly.bazelgen.generator.buildfile.BuildStatement
+import org.morfly.bazelgen.generator.file.BazelRc
+import org.morfly.bazelgen.generator.dsl.core.BazelRcStatement
+import org.morfly.bazelgen.generator.dsl.core.BuildStatement
 
 
 /**

@@ -2,10 +2,10 @@
 
 package org.morfly.bazelgen.generator.formatter
 
-import org.morfly.bazelgen.generator.buildfile.BazelFile
-import org.morfly.bazelgen.generator.buildfile.BazelRcStatement
-import org.morfly.bazelgen.generator.buildfile.BuildStatement
-import org.morfly.bazelgen.generator.buildfile.LoadStatement
+import org.morfly.bazelgen.generator.dsl.core.BazelRcStatement
+import org.morfly.bazelgen.generator.dsl.core.BuildStatement
+import org.morfly.bazelgen.generator.dsl.core.LoadStatement
+import org.morfly.bazelgen.generator.file.BazelFile
 import org.morfly.bazelgen.generator.formatter.IndentMode.NEW_LINE
 
 
@@ -53,28 +53,28 @@ fun BazelFileFormatter.Companion.newInstance(indentSize: Int = DEFAULT_INDENT_SI
     val listFormatter = ListFormatter(indentSize)
     val dictionaryFormatter = DictionaryFormatter(quoteFormatter, indentSize)
     val functionCallFormatter = FunctionCallFormatter(indentSize)
+    val comprehensionFormatter = ComprehensionFormatter(indentSize)
+    val concatenationFormatter = ConcatenationFormatter(indentSize)
 
-    val valueFormatter = ValueFormatter(
+    val expressionFormatter = ExpressionFormatter(
         baseFormatter, quoteFormatter, justTextFormatter, listFormatter, dictionaryFormatter, functionCallFormatter,
-        indentSize
+        comprehensionFormatter, concatenationFormatter, indentSize
     )
-    listFormatter.valueFormatter = valueFormatter
-    dictionaryFormatter.valueFormatter = valueFormatter
+    listFormatter.expressionFormatter = expressionFormatter
+    dictionaryFormatter.expressionFormatter = expressionFormatter
+    comprehensionFormatter.expressionFormatter = expressionFormatter
+    concatenationFormatter.expressionFormatter = expressionFormatter
 
-    val assignmentFormatter = AssignmentFormatter(valueFormatter, indentSize)
+    val assignmentFormatter = AssignmentFormatter(expressionFormatter, indentSize)
     functionCallFormatter.assignmentFormatter = assignmentFormatter
 
     val loadFormatter = LoadFormatter(quoteFormatter, indentSize)
-    val comprehensionFormatter = ComprehensionFormatter(valueFormatter, indentSize)
-    val concatenationFormatter = ConcatenationFormatter(valueFormatter, indentSize)
     val bazelRcFormatter = BazelRcFormatter()
 
     val statementFormatter = BuildStatementFormatter(
-        justTextFormatter, functionCallFormatter, valueFormatter, assignmentFormatter, loadFormatter,
-        comprehensionFormatter, concatenationFormatter, bazelRcFormatter, indentSize
+        justTextFormatter, expressionFormatter, assignmentFormatter, loadFormatter, bazelRcFormatter, indentSize
     )
     comprehensionFormatter.statementFormatter = statementFormatter
-    concatenationFormatter.statementFormatter = statementFormatter
 
     return BazelFileFormatter(statementFormatter)
 }

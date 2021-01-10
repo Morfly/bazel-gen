@@ -7,28 +7,30 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import org.morfly.bazelgen.generator.buildfile.RawTextStatement
-import org.morfly.bazelgen.generator.dsl.type.ListReference
-import org.morfly.bazelgen.generator.dsl.type.StringFunctionCall
+import org.morfly.bazelgen.generator.dsl.core.RawTextStatement
+import org.morfly.bazelgen.generator.dsl.core.element.ListReference
+import org.morfly.bazelgen.generator.dsl.core.element.StringFunctionCall
 import org.morfly.bazelgen.generator.formatter.IndentMode.CONTINUE_LINE
 import org.morfly.bazelgen.generator.formatter.IndentMode.NEW_LINE
 
 
-class ValueFormatterTests : ShouldSpec({
+class ExpressionFormatterTests : ShouldSpec({
     val baseFormatter = mockk<BaseTextFormatter>()
     val quoteFormatter = mockk<QuoteFormatter>()
     val justTextFormatter = mockk<JustTextFormatter>()
     val listTextFormatter = mockk<ListFormatter>()
     val dictionaryFormatter = mockk<DictionaryFormatter>()
     val functionCallFormatter = mockk<FunctionCallFormatter>()
+    val comprehensionFormatter = mockk<ComprehensionFormatter>()
+    val concatenationFormatter = mockk<ConcatenationFormatter>()
 
     val ___4 = " ".repeat(4)
     val _______8 = " ".repeat(8)
 
     should("throw an exception for dictionary with the non-string key") {
-        val formatter = ValueFormatter(
+        val formatter = ExpressionFormatter(
             baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-            functionCallFormatter
+            functionCallFormatter, comprehensionFormatter, concatenationFormatter
         )
 
         val dict = mapOf(Any() to "value1")
@@ -43,18 +45,18 @@ class ValueFormatterTests : ShouldSpec({
 
         every { dictionaryFormatter(emptyMap<String, Any?>(), indentIndex = 1, mode = NEW_LINE) } returns "$___4{}"
 
-        val formatter = ValueFormatter(
+        val formatter = ExpressionFormatter(
             baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-            functionCallFormatter
+            functionCallFormatter, comprehensionFormatter, concatenationFormatter
         )
 
         formatter.format(dict, indentIndex = 1, NEW_LINE) shouldBe "$___4{}"
     }
 
     should("throw an exception for 'BuildStatement'") {
-        val formatter = ValueFormatter(
+        val formatter = ExpressionFormatter(
             baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-            functionCallFormatter
+            functionCallFormatter, comprehensionFormatter, concatenationFormatter
         )
 
         val statement = RawTextStatement("statement")
@@ -66,9 +68,9 @@ class ValueFormatterTests : ShouldSpec({
 
     context("mode NEW_LINE") {
         should("format reference") {
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             val ref = ListReference<String>(name = "TEST_VARIABLE")
@@ -85,9 +87,9 @@ class ValueFormatterTests : ShouldSpec({
 
             every { listTextFormatter(list, indentIndex = 1, mode = NEW_LINE) } returns expectedResult
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(list, indentIndex = 1, NEW_LINE) shouldBe expectedResult
@@ -105,9 +107,9 @@ class ValueFormatterTests : ShouldSpec({
 
             every { listTextFormatter(list, indentIndex = 1, mode = NEW_LINE) } returns expectedResult
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(list, indentIndex = 1, NEW_LINE) shouldBe expectedResult
@@ -124,9 +126,9 @@ class ValueFormatterTests : ShouldSpec({
 
             every { functionCallFormatter(func, indentIndex = 1, mode = NEW_LINE) } returns expectedResult
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(func, indentIndex = 1, NEW_LINE) shouldBe expectedResult
@@ -144,9 +146,9 @@ class ValueFormatterTests : ShouldSpec({
 
             every { functionCallFormatter(func, indentIndex = 1, mode = NEW_LINE) } returns expectedResult
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(func, indentIndex = 1, NEW_LINE) shouldBe expectedResult
@@ -161,9 +163,9 @@ class ValueFormatterTests : ShouldSpec({
 
             every { dictionaryFormatter(dict, indentIndex = 1, mode = NEW_LINE) } returns expectedResult
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(dict, indentIndex = 1, NEW_LINE) shouldBe expectedResult
@@ -181,9 +183,9 @@ class ValueFormatterTests : ShouldSpec({
 
             every { dictionaryFormatter(dict, indentIndex = 1, mode = NEW_LINE) } returns expectedResult
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(dict, indentIndex = 1, NEW_LINE) shouldBe expectedResult
@@ -193,9 +195,9 @@ class ValueFormatterTests : ShouldSpec({
             every { baseFormatter(any()) } returns "literal"
             every { justTextFormatter("literal", indentIndex = 1, mode = NEW_LINE) } returns "literal"
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             val nullValue: Any? = null
@@ -223,9 +225,9 @@ class ValueFormatterTests : ShouldSpec({
                 justTextFormatter("\"single-line string\"", indentIndex = 1, mode = NEW_LINE)
             } returns "$___4\"single-line string\""
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(
@@ -256,9 +258,9 @@ class ValueFormatterTests : ShouldSpec({
                 )
             } returns quotedMultilineString
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(multilineString, indentIndex = 1, mode = NEW_LINE) shouldBe quotedMultilineString
@@ -272,9 +274,9 @@ class ValueFormatterTests : ShouldSpec({
                 justTextFormatter("\"TestType(arg1=value1)\"", indentIndex = 1, mode = any())
             } returns "$___4\"TestType(arg1=value1)\""
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             val testObject = TestType(arg1 = "value1")
@@ -285,9 +287,9 @@ class ValueFormatterTests : ShouldSpec({
 
     context("mode CONTINUE_LINE") {
         should("format reference") {
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             val ref = ListReference<String>(name = "TEST_VARIABLE")
@@ -304,9 +306,9 @@ class ValueFormatterTests : ShouldSpec({
 
             every { listTextFormatter(list, indentIndex = 1, mode = CONTINUE_LINE) } returns expectedResult
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(list, indentIndex = 1, CONTINUE_LINE) shouldBe expectedResult
@@ -324,9 +326,9 @@ class ValueFormatterTests : ShouldSpec({
 
             every { listTextFormatter(list, indentIndex = 1, mode = CONTINUE_LINE) } returns expectedResult
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(list, indentIndex = 1, CONTINUE_LINE) shouldBe expectedResult
@@ -341,9 +343,9 @@ class ValueFormatterTests : ShouldSpec({
 
             every { functionCallFormatter(func, indentIndex = 1, mode = CONTINUE_LINE) } returns expectedResult
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(func, indentIndex = 1, CONTINUE_LINE) shouldBe expectedResult
@@ -361,9 +363,9 @@ class ValueFormatterTests : ShouldSpec({
 
             every { functionCallFormatter(func, indentIndex = 1, mode = CONTINUE_LINE) } returns expectedResult
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(func, indentIndex = 1, CONTINUE_LINE) shouldBe expectedResult
@@ -378,9 +380,9 @@ class ValueFormatterTests : ShouldSpec({
 
             every { dictionaryFormatter(dict, indentIndex = 1, mode = CONTINUE_LINE) } returns expectedResult
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(dict, indentIndex = 1, CONTINUE_LINE) shouldBe expectedResult
@@ -398,9 +400,9 @@ class ValueFormatterTests : ShouldSpec({
 
             every { dictionaryFormatter(dict, indentIndex = 1, mode = CONTINUE_LINE) } returns expectedResult
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(dict, indentIndex = 1, CONTINUE_LINE) shouldBe expectedResult
@@ -410,9 +412,9 @@ class ValueFormatterTests : ShouldSpec({
             every { baseFormatter(any()) } returns "literal"
             every { justTextFormatter("literal", indentIndex = 1, mode = any()) } returns "literal"
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             val nullValue: Any? = null
@@ -455,9 +457,9 @@ class ValueFormatterTests : ShouldSpec({
                 justTextFormatter("\"single-line string\"", indentIndex = 1, mode = CONTINUE_LINE)
             } returns "\"single-line string\""
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(
@@ -488,9 +490,9 @@ class ValueFormatterTests : ShouldSpec({
                 )
             } returns quotedMultilineString
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             formatter.format(multilineString, indentIndex = 1, mode = CONTINUE_LINE) shouldBe quotedMultilineString
@@ -504,9 +506,9 @@ class ValueFormatterTests : ShouldSpec({
                 justTextFormatter("\"TestType(arg1=value1)\"", indentIndex = 1, mode = any())
             } returns "\"TestType(arg1=value1)\""
 
-            val formatter = ValueFormatter(
+            val formatter = ExpressionFormatter(
                 baseFormatter, quoteFormatter, justTextFormatter, listTextFormatter, dictionaryFormatter,
-                functionCallFormatter
+                functionCallFormatter, comprehensionFormatter, concatenationFormatter
             )
 
             val testObject = TestType(arg1 = "value1")

@@ -1,17 +1,16 @@
-package org.morfly.bazelgen.generator.dsl.type
+package org.morfly.bazelgen.generator.dsl.core.element
 
-import org.morfly.bazelgen.generator.buildfile.FunctionCall
 import org.morfly.bazelgen.generator.dsl.StarlarkContext
 
 
 /**
  *
  */
-sealed class PureFunctionCall(
-    override val name: String,
+sealed class FunctionCall(
+    val name: String,
     args: Map<String, Any?>
-) : FunctionCall, StarlarkDslType {
-    override val args = args.filterNotNullValues()
+) : Expression(), StarlarkDslElement {
+    val args = args.filterNotNullValues()
 }
 
 /**
@@ -22,7 +21,7 @@ fun Map<String, Any?>.filterNotNullValues(): Map<String, Any> =
     this.filterValues { it != null }
         .mapValues { (_, value) ->
             when (value) {
-                is StarlarkDslType -> value
+                is StarlarkDslElement -> value
                 is List<*> -> value.filterNotNull()
                 else -> value
             }
@@ -31,10 +30,19 @@ fun Map<String, Any?>.filterNotNullValues(): Map<String, Any> =
 /**
  *
  */
+class StringFunctionCall(
+    name: String,
+    args: Map<String, Any?>
+) : FunctionCall(name, args), CharSequence by name
+
+
+/**
+ *
+ */
 class ListFunctionCall<T>(
     name: String,
     args: Map<String, Any?>
-) : PureFunctionCall(name, args), List<T> by emptyList()
+) : FunctionCall(name, args), List<T> by emptyList()
 
 /**
  *
@@ -42,15 +50,7 @@ class ListFunctionCall<T>(
 class DictionaryFunctionCall(
     name: String,
     args: Map<String, Any?>
-) : PureFunctionCall(name, args), Map<String, Any> by emptyMap()
-
-/**
- *
- */
-class StringFunctionCall(
-    name: String,
-    args: Map<String, Any?>
-) : PureFunctionCall(name, args), CharSequence by name
+) : FunctionCall(name, args), Map<String, Any?> by emptyMap()
 
 /**
  *
@@ -58,8 +58,12 @@ class StringFunctionCall(
 class AnyFunctionCall(
     name: String,
     args: Map<String, Any?>
-) : PureFunctionCall(name, args)
+) : FunctionCall(name, args)
 
+/**
+ *
+ */
+typealias VoidFunctionCall = AnyFunctionCall
 
 /**
  *

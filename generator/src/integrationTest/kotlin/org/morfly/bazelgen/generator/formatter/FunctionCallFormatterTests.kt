@@ -4,7 +4,7 @@ package org.morfly.bazelgen.generator.formatter
 
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import org.morfly.bazelgen.generator.dsl.type.StringFunctionCall
+import org.morfly.bazelgen.generator.dsl.core.element.StringFunctionCall
 import org.morfly.bazelgen.generator.formatter.IndentMode.CONTINUE_LINE
 import org.morfly.bazelgen.generator.formatter.IndentMode.NEW_LINE
 
@@ -16,14 +16,24 @@ fun newFunctionCallFormatter(indentSize: Int): FunctionCallFormatter {
     val listFormatter = ListFormatter(indentSize)
     val dictionaryFormatter = DictionaryFormatter(quoteFormatter, indentSize)
     val functionCallFormatter = FunctionCallFormatter(indentSize)
-    val valueFormatter = ValueFormatter(
+    val comprehensionFormatter = ComprehensionFormatter(indentSize)
+    val concatenationFormatter = ConcatenationFormatter(indentSize)
+    val expressionFormatter = ExpressionFormatter(
         baseFormatter, quoteFormatter, justTextFormatter, listFormatter, dictionaryFormatter, functionCallFormatter,
-        indentSize
+        comprehensionFormatter, concatenationFormatter, indentSize
     )
-    listFormatter.valueFormatter = valueFormatter
-    dictionaryFormatter.valueFormatter = valueFormatter
-    val assignmentFormatter = AssignmentFormatter(valueFormatter, indentSize)
+    comprehensionFormatter.expressionFormatter = expressionFormatter
+    concatenationFormatter.expressionFormatter = expressionFormatter
+    listFormatter.expressionFormatter = expressionFormatter
+    dictionaryFormatter.expressionFormatter = expressionFormatter
+    val assignmentFormatter = AssignmentFormatter(expressionFormatter, indentSize)
     functionCallFormatter.assignmentFormatter = assignmentFormatter
+    val loadFormatter = LoadFormatter(quoteFormatter, indentSize)
+    val bazelRcFormatter = BazelRcFormatter()
+    val statementFormatter = BuildStatementFormatter(
+        justTextFormatter, expressionFormatter, assignmentFormatter, loadFormatter, bazelRcFormatter, indentSize
+    )
+    comprehensionFormatter.statementFormatter = statementFormatter
 
     return functionCallFormatter
 }

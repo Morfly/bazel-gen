@@ -1,7 +1,8 @@
-package org.morfly.bazelgen.generator.buildfile
+package org.morfly.bazelgen.generator.file
 
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
+import org.morfly.bazelgen.generator.dsl.core.RawTextStatement
 
 
 class BazelFilesTests : ShouldSpec({

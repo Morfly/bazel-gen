@@ -5,30 +5,40 @@ package org.morfly.bazelgen.generator.formatter
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import org.morfly.bazelgen.generator.buildfile.RawTextStatement
-import org.morfly.bazelgen.generator.dsl.type.ListReference
-import org.morfly.bazelgen.generator.dsl.type.StringFunctionCall
+import org.morfly.bazelgen.generator.dsl.core.RawTextStatement
+import org.morfly.bazelgen.generator.dsl.core.element.ListReference
+import org.morfly.bazelgen.generator.dsl.core.element.StringFunctionCall
 import org.morfly.bazelgen.generator.formatter.IndentMode.CONTINUE_LINE
 import org.morfly.bazelgen.generator.formatter.IndentMode.NEW_LINE
 
 
-fun newValueFormatter(indentSize: Int): ValueFormatter {
+fun newExpressionFormatter(indentSize: Int): ExpressionFormatter {
     val baseFormatter = BaseTextFormatter()
     val quoteFormatter = QuoteFormatter()
     val justTextFormatter = JustTextFormatter(indentSize)
     val listFormatter = ListFormatter(indentSize)
     val dictionaryFormatter = DictionaryFormatter(quoteFormatter, indentSize)
     val functionCallFormatter = FunctionCallFormatter(indentSize)
-    val valueFormatter = ValueFormatter(
+    val comprehensionFormatter = ComprehensionFormatter(indentSize)
+    val concatenationFormatter = ConcatenationFormatter(indentSize)
+    val expressionFormatter = ExpressionFormatter(
         baseFormatter, quoteFormatter, justTextFormatter, listFormatter, dictionaryFormatter, functionCallFormatter,
-        indentSize
+        comprehensionFormatter, concatenationFormatter, indentSize
     )
-    listFormatter.valueFormatter = valueFormatter
-    dictionaryFormatter.valueFormatter = valueFormatter
-    val assignmentFormatter = AssignmentFormatter(valueFormatter, indentSize)
+    comprehensionFormatter.expressionFormatter = expressionFormatter
+    concatenationFormatter.expressionFormatter = expressionFormatter
+    listFormatter.expressionFormatter = expressionFormatter
+    dictionaryFormatter.expressionFormatter = expressionFormatter
+    val assignmentFormatter = AssignmentFormatter(expressionFormatter, indentSize)
     functionCallFormatter.assignmentFormatter = assignmentFormatter
+    val loadFormatter = LoadFormatter(quoteFormatter, indentSize)
+    val bazelRcFormatter = BazelRcFormatter()
+    val statementFormatter = BuildStatementFormatter(
+        justTextFormatter, expressionFormatter, assignmentFormatter, loadFormatter, bazelRcFormatter, indentSize
+    )
+    comprehensionFormatter.statementFormatter = statementFormatter
 
-    return valueFormatter
+    return expressionFormatter
 }
 
 
@@ -40,7 +50,7 @@ class ValueFormatterTests : ShouldSpec({
     should("throw an exception for dictionary with the non-string key") {
         val dict = mapOf(Any() to "value1")
 
-        val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+        val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
         shouldThrow<IllegalStateException> {
             formatter.format(dict, indentIndex = 1, NEW_LINE)
@@ -50,13 +60,13 @@ class ValueFormatterTests : ShouldSpec({
     should("format empty dictionary with the non-string key") {
         val dict = mapOf<Any, Any?>()
 
-        val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+        val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
         formatter.format(dict, indentIndex = 1, NEW_LINE) shouldBe "$___4{}"
     }
 
     should("throw an exception for 'BuildStatement'") {
-        val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+        val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
         val statement = RawTextStatement("statement")
 
@@ -68,7 +78,7 @@ class ValueFormatterTests : ShouldSpec({
     context("mode NEW_LINE") {
 
         should("format reference") {
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             val ref = ListReference<String>(name = "TEST_VARIABLE")
 
@@ -82,7 +92,7 @@ class ValueFormatterTests : ShouldSpec({
 
             val list = listOf("item1")
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(list, indentIndex = 1, NEW_LINE) shouldBe expectedResult
         }
@@ -97,7 +107,7 @@ class ValueFormatterTests : ShouldSpec({
 
             val list = listOf("item1", "item2")
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(list, indentIndex = 1, NEW_LINE) shouldBe expectedResult
         }
@@ -111,7 +121,7 @@ class ValueFormatterTests : ShouldSpec({
 
             val func = StringFunctionCall("test_func", mapOf("arg1" to 1))
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(func, indentIndex = 1, NEW_LINE) shouldBe expectedResult
         }
@@ -126,7 +136,7 @@ class ValueFormatterTests : ShouldSpec({
 
             val func = StringFunctionCall("test_func", mapOf("arg1" to 1, "arg2" to "2"))
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(func, indentIndex = 1, NEW_LINE) shouldBe expectedResult
         }
@@ -138,7 +148,7 @@ class ValueFormatterTests : ShouldSpec({
 
             val dict = mapOf("param1" to "value1")
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(dict, indentIndex = 1, NEW_LINE) shouldBe expectedResult
         }
@@ -153,13 +163,13 @@ class ValueFormatterTests : ShouldSpec({
 
             val dict = mapOf("param1" to "value1", "param2" to "value2")
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(dict, indentIndex = 1, NEW_LINE) shouldBe expectedResult
         }
 
         should("format literals") {
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             val nullValue: Any? = null
             val intValue = 42
@@ -181,7 +191,7 @@ class ValueFormatterTests : ShouldSpec({
         }
 
         should("format single-line string") {
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(
                 "single-line string",
@@ -204,7 +214,7 @@ class ValueFormatterTests : ShouldSpec({
                 |$___4$quotes
             """.trimMargin()
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(multilineString, indentIndex = 1, mode = NEW_LINE) shouldBe quotedMultilineString
         }
@@ -212,7 +222,7 @@ class ValueFormatterTests : ShouldSpec({
         should("format other types") {
             data class TestType(val arg1: String)
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             val testObject = TestType(arg1 = "value1")
 
@@ -223,7 +233,7 @@ class ValueFormatterTests : ShouldSpec({
     context("mode CONTINUE_LINE") {
 
         should("format reference") {
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             val ref = ListReference<String>(name = "TEST_VARIABLE")
 
@@ -237,7 +247,7 @@ class ValueFormatterTests : ShouldSpec({
 
             val list = listOf("item1")
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(list, indentIndex = 1, CONTINUE_LINE) shouldBe expectedResult
         }
@@ -252,7 +262,7 @@ class ValueFormatterTests : ShouldSpec({
 
             val list = listOf("item1", "item2")
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(list, indentIndex = 1, CONTINUE_LINE) shouldBe expectedResult
         }
@@ -266,7 +276,7 @@ class ValueFormatterTests : ShouldSpec({
 
             val func = StringFunctionCall("test_func", mapOf("arg1" to 1))
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(func, indentIndex = 1, CONTINUE_LINE) shouldBe expectedResult
         }
@@ -281,7 +291,7 @@ class ValueFormatterTests : ShouldSpec({
 
             val func = StringFunctionCall("test_func", mapOf("arg1" to 1, "arg2" to "2"))
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(func, indentIndex = 1, CONTINUE_LINE) shouldBe expectedResult
         }
@@ -293,7 +303,7 @@ class ValueFormatterTests : ShouldSpec({
 
             val dict = mapOf("param1" to "value1")
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(dict, indentIndex = 1, CONTINUE_LINE) shouldBe expectedResult
         }
@@ -308,13 +318,13 @@ class ValueFormatterTests : ShouldSpec({
 
             val dict = mapOf("param1" to "value1", "param2" to "value2")
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(dict, indentIndex = 1, CONTINUE_LINE) shouldBe expectedResult
         }
 
         should("format literals") {
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             val nullValue: Any? = null
             val intValue = 42
@@ -336,7 +346,7 @@ class ValueFormatterTests : ShouldSpec({
         }
 
         should("format single-line string") {
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(
                 "single-line string", indentIndex = 1, mode = CONTINUE_LINE
@@ -357,7 +367,7 @@ class ValueFormatterTests : ShouldSpec({
                 |$___4$quotes
             """.trimMargin()
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             formatter.format(multilineString, indentIndex = 1, mode = CONTINUE_LINE) shouldBe quotedMultilineString
         }
@@ -365,7 +375,7 @@ class ValueFormatterTests : ShouldSpec({
         should("format other types") {
             data class TestType(val arg1: String)
 
-            val formatter = newValueFormatter(indentSize = DEFAULT_INDENT_SIZE)
+            val formatter = newExpressionFormatter(indentSize = DEFAULT_INDENT_SIZE)
 
             val testObject = TestType(arg1 = "value1")
 

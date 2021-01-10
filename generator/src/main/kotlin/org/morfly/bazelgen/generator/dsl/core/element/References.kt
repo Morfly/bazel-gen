@@ -1,10 +1,10 @@
-package org.morfly.bazelgen.generator.dsl.type
+package org.morfly.bazelgen.generator.dsl.core.element
 
 
 /**
  *
  */
-sealed class Reference(open val name: String): StarlarkDslType
+sealed class Reference(open val name: String) : StarlarkDslElement
 
 /**
  *

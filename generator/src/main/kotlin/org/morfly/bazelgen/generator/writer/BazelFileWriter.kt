@@ -2,7 +2,7 @@
 
 package org.morfly.bazelgen.generator.writer
 
-import org.morfly.bazelgen.generator.buildfile.BazelFile
+import org.morfly.bazelgen.generator.file.BazelFile
 import org.morfly.bazelgen.generator.formatter.BazelFileFormatter
 import org.morfly.bazelgen.generator.formatter.newInstance
 import java.io.File

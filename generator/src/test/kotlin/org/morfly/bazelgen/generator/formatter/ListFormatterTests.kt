@@ -12,7 +12,7 @@ import org.morfly.bazelgen.generator.formatter.IndentMode.NEW_LINE
 
 
 class ListFormatterTests : ShouldSpec({
-    val valueFormatter = mockk<ValueFormatter>()
+    val expressionFormatter = mockk<ExpressionFormatter>()
 
     should("fail if dependencies are not initialized") {
         val formatter = ListFormatter()
@@ -28,7 +28,7 @@ class ListFormatterTests : ShouldSpec({
             val _______8 = " ".repeat(8)
 
             val formatter = ListFormatter().apply {
-                this.valueFormatter = valueFormatter
+                this.expressionFormatter = expressionFormatter
             }
 
             should("format empty list") {
@@ -38,7 +38,7 @@ class ListFormatterTests : ShouldSpec({
             }
 
             should("format single item list") {
-                every { valueFormatter("//label", indentIndex = 2, CONTINUE_LINE) } returns "\"//label\""
+                every { expressionFormatter("//label", indentIndex = 2, CONTINUE_LINE) } returns "\"//label\""
 
                 val list = listOf("//label")
 
@@ -46,9 +46,9 @@ class ListFormatterTests : ShouldSpec({
             }
 
             should("format list") {
-                every { valueFormatter("//label1", indentIndex = 2, NEW_LINE) } returns "$_______8\"//label1\""
-                every { valueFormatter("//label2", indentIndex = 2, NEW_LINE) } returns "$_______8\"//label2\""
-                every { valueFormatter("//label3", indentIndex = 2, NEW_LINE) } returns "$_______8\"//label3\""
+                every { expressionFormatter("//label1", indentIndex = 2, NEW_LINE) } returns "$_______8\"//label1\""
+                every { expressionFormatter("//label2", indentIndex = 2, NEW_LINE) } returns "$_______8\"//label2\""
+                every { expressionFormatter("//label3", indentIndex = 2, NEW_LINE) } returns "$_______8\"//label3\""
 
                 val list = listOf("//label1", "//label2", "//label3")
 
@@ -68,7 +68,7 @@ class ListFormatterTests : ShouldSpec({
             val _____6 = " ".repeat(6)
 
             val formatter = ListFormatter(indentSize = 3).apply {
-                this.valueFormatter = valueFormatter
+                this.expressionFormatter = expressionFormatter
             }
 
             should("format empty list") {
@@ -78,7 +78,7 @@ class ListFormatterTests : ShouldSpec({
             }
 
             should("format single item list") {
-                every { valueFormatter("//label", indentIndex = 2, CONTINUE_LINE) } returns "\"//label\""
+                every { expressionFormatter("//label", indentIndex = 2, CONTINUE_LINE) } returns "\"//label\""
 
                 val list = listOf("//label")
 
@@ -86,9 +86,9 @@ class ListFormatterTests : ShouldSpec({
             }
 
             should("format list") {
-                every { valueFormatter("//label1", indentIndex = 2, NEW_LINE) } returns "$_____6\"//label1\""
-                every { valueFormatter("//label2", indentIndex = 2, NEW_LINE) } returns "$_____6\"//label2\""
-                every { valueFormatter("//label3", indentIndex = 2, NEW_LINE) } returns "$_____6\"//label3\""
+                every { expressionFormatter("//label1", indentIndex = 2, NEW_LINE) } returns "$_____6\"//label1\""
+                every { expressionFormatter("//label2", indentIndex = 2, NEW_LINE) } returns "$_____6\"//label2\""
+                every { expressionFormatter("//label3", indentIndex = 2, NEW_LINE) } returns "$_____6\"//label3\""
 
                 val list = listOf("//label1", "//label2", "//label3")
 
@@ -105,7 +105,7 @@ class ListFormatterTests : ShouldSpec({
 
         context("with no 'indentSize' (0)") {
             val formatter = ListFormatter(indentSize = 0).apply {
-                this.valueFormatter = valueFormatter
+                this.expressionFormatter = expressionFormatter
             }
 
             should("format empty list") {
@@ -115,7 +115,7 @@ class ListFormatterTests : ShouldSpec({
             }
 
             should("format single item list") {
-                every { valueFormatter("//label", indentIndex = 2, CONTINUE_LINE) } returns "\"//label\""
+                every { expressionFormatter("//label", indentIndex = 2, CONTINUE_LINE) } returns "\"//label\""
 
                 val list = listOf("//label")
 
@@ -123,9 +123,9 @@ class ListFormatterTests : ShouldSpec({
             }
 
             should("format list") {
-                every { valueFormatter("//label1", indentIndex = 2, NEW_LINE) } returns "\"//label1\""
-                every { valueFormatter("//label2", indentIndex = 2, NEW_LINE) } returns "\"//label2\""
-                every { valueFormatter("//label3", indentIndex = 2, NEW_LINE) } returns "\"//label3\""
+                every { expressionFormatter("//label1", indentIndex = 2, NEW_LINE) } returns "\"//label1\""
+                every { expressionFormatter("//label2", indentIndex = 2, NEW_LINE) } returns "\"//label2\""
+                every { expressionFormatter("//label3", indentIndex = 2, NEW_LINE) } returns "\"//label3\""
 
                 val list = listOf("//label1", "//label2", "//label3")
 
@@ -147,7 +147,7 @@ class ListFormatterTests : ShouldSpec({
             val _______8 = " ".repeat(8)
 
             val formatter = ListFormatter().apply {
-                this.valueFormatter = valueFormatter
+                this.expressionFormatter = expressionFormatter
             }
 
             should("format empty list") {
@@ -157,7 +157,7 @@ class ListFormatterTests : ShouldSpec({
             }
 
             should("format single item list") {
-                every { valueFormatter("//label", indentIndex = 2, CONTINUE_LINE) } returns "\"//label\""
+                every { expressionFormatter("//label", indentIndex = 2, CONTINUE_LINE) } returns "\"//label\""
 
                 val list = listOf("//label")
 
@@ -165,9 +165,9 @@ class ListFormatterTests : ShouldSpec({
             }
 
             should("format list") {
-                every { valueFormatter("//label1", indentIndex = 2, NEW_LINE) } returns "$_______8\"//label1\""
-                every { valueFormatter("//label2", indentIndex = 2, NEW_LINE) } returns "$_______8\"//label2\""
-                every { valueFormatter("//label3", indentIndex = 2, NEW_LINE) } returns "$_______8\"//label3\""
+                every { expressionFormatter("//label1", indentIndex = 2, NEW_LINE) } returns "$_______8\"//label1\""
+                every { expressionFormatter("//label2", indentIndex = 2, NEW_LINE) } returns "$_______8\"//label2\""
+                every { expressionFormatter("//label3", indentIndex = 2, NEW_LINE) } returns "$_______8\"//label3\""
 
                 val list = listOf("//label1", "//label2", "//label3")
 
@@ -187,7 +187,7 @@ class ListFormatterTests : ShouldSpec({
             val _____6 = " ".repeat(6)
 
             val formatter = ListFormatter(indentSize = 3).apply {
-                this.valueFormatter = valueFormatter
+                this.expressionFormatter = expressionFormatter
             }
 
             should("format empty list") {
@@ -197,7 +197,7 @@ class ListFormatterTests : ShouldSpec({
             }
 
             should("format single item list") {
-                every { valueFormatter("//label", indentIndex = 2, CONTINUE_LINE) } returns "\"//label\""
+                every { expressionFormatter("//label", indentIndex = 2, CONTINUE_LINE) } returns "\"//label\""
 
                 val list = listOf("//label")
 
@@ -205,9 +205,9 @@ class ListFormatterTests : ShouldSpec({
             }
 
             should("format list") {
-                every { valueFormatter("//label1", indentIndex = 2, NEW_LINE) } returns "$_____6\"//label1\""
-                every { valueFormatter("//label2", indentIndex = 2, NEW_LINE) } returns "$_____6\"//label2\""
-                every { valueFormatter("//label3", indentIndex = 2, NEW_LINE) } returns "$_____6\"//label3\""
+                every { expressionFormatter("//label1", indentIndex = 2, NEW_LINE) } returns "$_____6\"//label1\""
+                every { expressionFormatter("//label2", indentIndex = 2, NEW_LINE) } returns "$_____6\"//label2\""
+                every { expressionFormatter("//label3", indentIndex = 2, NEW_LINE) } returns "$_____6\"//label3\""
 
                 val list = listOf("//label1", "//label2", "//label3")
 
@@ -224,7 +224,7 @@ class ListFormatterTests : ShouldSpec({
 
         context("with no 'indentSize' (0)") {
             val formatter = ListFormatter(indentSize = 0).apply {
-                this.valueFormatter = valueFormatter
+                this.expressionFormatter = expressionFormatter
             }
 
             should("format empty list") {
@@ -234,7 +234,7 @@ class ListFormatterTests : ShouldSpec({
             }
 
             should("format single item list") {
-                every { valueFormatter("//label", indentIndex = 2, CONTINUE_LINE) } returns "\"//label\""
+                every { expressionFormatter("//label", indentIndex = 2, CONTINUE_LINE) } returns "\"//label\""
 
                 val list = listOf("//label")
 
@@ -242,9 +242,9 @@ class ListFormatterTests : ShouldSpec({
             }
 
             should("format list") {
-                every { valueFormatter("//label1", indentIndex = 2, NEW_LINE) } returns "\"//label1\""
-                every { valueFormatter("//label2", indentIndex = 2, NEW_LINE) } returns "\"//label2\""
-                every { valueFormatter("//label3", indentIndex = 2, NEW_LINE) } returns "\"//label3\""
+                every { expressionFormatter("//label1", indentIndex = 2, NEW_LINE) } returns "\"//label1\""
+                every { expressionFormatter("//label2", indentIndex = 2, NEW_LINE) } returns "\"//label2\""
+                every { expressionFormatter("//label3", indentIndex = 2, NEW_LINE) } returns "\"//label3\""
 
                 val list = listOf("//label1", "//label2", "//label3")
 

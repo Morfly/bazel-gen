@@ -4,7 +4,7 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import org.morfly.bazelgen.generator.buildfile.LoadStatement
+import org.morfly.bazelgen.generator.dsl.core.LoadStatement
 
 
 class LoadFormatterTests : ShouldSpec({
@@ -20,7 +20,7 @@ class LoadFormatterTests : ShouldSpec({
             every { quoteFormatter("//:test.bzl") } returns "\"//:test.bzl\""
             every { quoteFormatter("rule1") } returns "\"rule1\""
 
-            val load = LoadStatement("//:test.bzl", listOf("rule1"))
+            val load = LoadStatement("//:test.bzl", mapOf("rule1" to null))
 
             val expectedResult = """
                 load("//:test.bzl", "rule1")
@@ -34,7 +34,7 @@ class LoadFormatterTests : ShouldSpec({
             every { quoteFormatter("rule1") } returns "\"rule1\""
             every { quoteFormatter("rule2") } returns "\"rule2\""
 
-            val load = LoadStatement("//:test.bzl", listOf("rule1", "rule2"))
+            val load = LoadStatement("//:test.bzl", mapOf("rule1" to null, "rule2" to null))
 
             val expectedResult = """
                 load("//:test.bzl", "rule1", "rule2")

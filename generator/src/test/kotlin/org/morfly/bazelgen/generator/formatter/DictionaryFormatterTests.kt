@@ -14,7 +14,7 @@ import org.morfly.bazelgen.generator.formatter.IndentMode.NEW_LINE
 class DictionaryFormatterTests : ShouldSpec({
 
     val quoteFormatter = mockk<QuoteFormatter>()
-    val valueFormatter = mockk<ValueFormatter>()
+    val expressionFormatter = mockk<ExpressionFormatter>()
 
     should("fail if dependencies are not initialized") {
         val formatter = DictionaryFormatter(quoteFormatter)
@@ -30,7 +30,7 @@ class DictionaryFormatterTests : ShouldSpec({
             val _______8 = " ".repeat(8)
 
             val formatter = DictionaryFormatter(quoteFormatter).apply {
-                this.valueFormatter = valueFormatter
+                this.expressionFormatter = expressionFormatter
             }
 
             should("format empty dictionary") {
@@ -41,7 +41,7 @@ class DictionaryFormatterTests : ShouldSpec({
 
             should("format single entry dictionary") {
                 every { quoteFormatter("param1") } returns "\"param1\""
-                every { valueFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
+                every { expressionFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
 
                 val dict = mapOf("param1" to "value1")
 
@@ -50,11 +50,11 @@ class DictionaryFormatterTests : ShouldSpec({
 
             should("format dictionary") {
                 every { quoteFormatter("param1") } returns "\"param1\""
-                every { valueFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
+                every { expressionFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
                 every { quoteFormatter("param2") } returns "\"param2\""
-                every { valueFormatter("value2", indentIndex = 2, CONTINUE_LINE) } returns "\"value2\""
+                every { expressionFormatter("value2", indentIndex = 2, CONTINUE_LINE) } returns "\"value2\""
                 every { quoteFormatter("param3") } returns "\"param3\""
-                every { valueFormatter("value3", indentIndex = 2, CONTINUE_LINE) } returns "\"value3\""
+                every { expressionFormatter("value3", indentIndex = 2, CONTINUE_LINE) } returns "\"value3\""
 
                 val dict = mapOf("param1" to "value1", "param2" to "value2", "param3" to "value3")
 
@@ -75,7 +75,7 @@ class DictionaryFormatterTests : ShouldSpec({
             val _____6 = " ".repeat(6)
 
             val formatter = DictionaryFormatter(quoteFormatter, indentSize = 3)
-                .apply { this.valueFormatter = valueFormatter }
+                .apply { this.expressionFormatter = expressionFormatter }
 
             should("format empty dictionary") {
                 val dict = emptyMap<String, Any?>()
@@ -85,7 +85,7 @@ class DictionaryFormatterTests : ShouldSpec({
 
             should("format single entry dictionary") {
                 every { quoteFormatter("param1") } returns "\"param1\""
-                every { valueFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
+                every { expressionFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
 
                 val dict = mapOf("param1" to "value1")
 
@@ -94,11 +94,11 @@ class DictionaryFormatterTests : ShouldSpec({
 
             should("format dictionary") {
                 every { quoteFormatter("param1") } returns "\"param1\""
-                every { valueFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
+                every { expressionFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
                 every { quoteFormatter("param2") } returns "\"param2\""
-                every { valueFormatter("value2", indentIndex = 2, CONTINUE_LINE) } returns "\"value2\""
+                every { expressionFormatter("value2", indentIndex = 2, CONTINUE_LINE) } returns "\"value2\""
                 every { quoteFormatter("param3") } returns "\"param3\""
-                every { valueFormatter("value3", indentIndex = 2, CONTINUE_LINE) } returns "\"value3\""
+                every { expressionFormatter("value3", indentIndex = 2, CONTINUE_LINE) } returns "\"value3\""
 
                 val dict = mapOf("param1" to "value1", "param2" to "value2", "param3" to "value3")
 
@@ -116,7 +116,7 @@ class DictionaryFormatterTests : ShouldSpec({
 
         context("with no 'indentSize' (0)") {
             val formatter = DictionaryFormatter(quoteFormatter, indentSize = 0)
-                .apply { this.valueFormatter = valueFormatter }
+                .apply { this.expressionFormatter = expressionFormatter }
 
             should("format empty dictionary") {
                 val dict = emptyMap<String, Any?>()
@@ -126,7 +126,7 @@ class DictionaryFormatterTests : ShouldSpec({
 
             should("format single entry dictionary") {
                 every { quoteFormatter("param1") } returns "\"param1\""
-                every { valueFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
+                every { expressionFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
 
                 val dict = mapOf("param1" to "value1")
 
@@ -135,11 +135,11 @@ class DictionaryFormatterTests : ShouldSpec({
 
             should("format dictionary") {
                 every { quoteFormatter("param1") } returns "\"param1\""
-                every { valueFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
+                every { expressionFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
                 every { quoteFormatter("param2") } returns "\"param2\""
-                every { valueFormatter("value2", indentIndex = 2, CONTINUE_LINE) } returns "\"value2\""
+                every { expressionFormatter("value2", indentIndex = 2, CONTINUE_LINE) } returns "\"value2\""
                 every { quoteFormatter("param3") } returns "\"param3\""
-                every { valueFormatter("value3", indentIndex = 2, CONTINUE_LINE) } returns "\"value3\""
+                every { expressionFormatter("value3", indentIndex = 2, CONTINUE_LINE) } returns "\"value3\""
 
                 val dict = mapOf("param1" to "value1", "param2" to "value2", "param3" to "value3")
 
@@ -162,7 +162,7 @@ class DictionaryFormatterTests : ShouldSpec({
             val _______8 = " ".repeat(8)
 
             val formatter = DictionaryFormatter(quoteFormatter).apply {
-                this.valueFormatter = valueFormatter
+                this.expressionFormatter = expressionFormatter
             }
 
             should("format empty dictionary") {
@@ -173,7 +173,7 @@ class DictionaryFormatterTests : ShouldSpec({
 
             should("format single entry dictionary") {
                 every { quoteFormatter("param1") } returns "\"param1\""
-                every { valueFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
+                every { expressionFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
 
                 val dict = mapOf("param1" to "value1")
 
@@ -182,11 +182,11 @@ class DictionaryFormatterTests : ShouldSpec({
 
             should("format dictionary") {
                 every { quoteFormatter("param1") } returns "\"param1\""
-                every { valueFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
+                every { expressionFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
                 every { quoteFormatter("param2") } returns "\"param2\""
-                every { valueFormatter("value2", indentIndex = 2, CONTINUE_LINE) } returns "\"value2\""
+                every { expressionFormatter("value2", indentIndex = 2, CONTINUE_LINE) } returns "\"value2\""
                 every { quoteFormatter("param3") } returns "\"param3\""
-                every { valueFormatter("value3", indentIndex = 2, CONTINUE_LINE) } returns "\"value3\""
+                every { expressionFormatter("value3", indentIndex = 2, CONTINUE_LINE) } returns "\"value3\""
 
                 val dict = mapOf("param1" to "value1", "param2" to "value2", "param3" to "value3")
 
@@ -207,7 +207,7 @@ class DictionaryFormatterTests : ShouldSpec({
             val _____6 = " ".repeat(6)
 
             val formatter = DictionaryFormatter(quoteFormatter, indentSize = 3)
-                .apply { this.valueFormatter = valueFormatter }
+                .apply { this.expressionFormatter = expressionFormatter }
 
             should("format empty dictionary") {
                 val dict = emptyMap<String, Any?>()
@@ -217,7 +217,7 @@ class DictionaryFormatterTests : ShouldSpec({
 
             should("format single entry dictionary") {
                 every { quoteFormatter("param1") } returns "\"param1\""
-                every { valueFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
+                every { expressionFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
 
                 val dict = mapOf("param1" to "value1")
 
@@ -226,11 +226,11 @@ class DictionaryFormatterTests : ShouldSpec({
 
             should("format dictionary") {
                 every { quoteFormatter("param1") } returns "\"param1\""
-                every { valueFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
+                every { expressionFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
                 every { quoteFormatter("param2") } returns "\"param2\""
-                every { valueFormatter("value2", indentIndex = 2, CONTINUE_LINE) } returns "\"value2\""
+                every { expressionFormatter("value2", indentIndex = 2, CONTINUE_LINE) } returns "\"value2\""
                 every { quoteFormatter("param3") } returns "\"param3\""
-                every { valueFormatter("value3", indentIndex = 2, CONTINUE_LINE) } returns "\"value3\""
+                every { expressionFormatter("value3", indentIndex = 2, CONTINUE_LINE) } returns "\"value3\""
 
                 val dict = mapOf("param1" to "value1", "param2" to "value2", "param3" to "value3")
 
@@ -248,7 +248,7 @@ class DictionaryFormatterTests : ShouldSpec({
 
         context("with no 'indentSize' (0)") {
             val formatter = DictionaryFormatter(quoteFormatter, indentSize = 0)
-                .apply { this.valueFormatter = valueFormatter }
+                .apply { this.expressionFormatter = expressionFormatter }
 
             should("format empty dictionary") {
                 val dict = emptyMap<String, Any?>()
@@ -258,7 +258,7 @@ class DictionaryFormatterTests : ShouldSpec({
 
             should("format single entry dictionary") {
                 every { quoteFormatter("param1") } returns "\"param1\""
-                every { valueFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
+                every { expressionFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
 
                 val dict = mapOf("param1" to "value1")
 
@@ -267,11 +267,11 @@ class DictionaryFormatterTests : ShouldSpec({
 
             should("format dictionary") {
                 every { quoteFormatter("param1") } returns "\"param1\""
-                every { valueFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
+                every { expressionFormatter("value1", indentIndex = 2, CONTINUE_LINE) } returns "\"value1\""
                 every { quoteFormatter("param2") } returns "\"param2\""
-                every { valueFormatter("value2", indentIndex = 2, CONTINUE_LINE) } returns "\"value2\""
+                every { expressionFormatter("value2", indentIndex = 2, CONTINUE_LINE) } returns "\"value2\""
                 every { quoteFormatter("param3") } returns "\"param3\""
-                every { valueFormatter("value3", indentIndex = 2, CONTINUE_LINE) } returns "\"value3\""
+                every { expressionFormatter("value3", indentIndex = 2, CONTINUE_LINE) } returns "\"value3\""
 
                 val dict = mapOf("param1" to "value1", "param2" to "value2", "param3" to "value3")
 

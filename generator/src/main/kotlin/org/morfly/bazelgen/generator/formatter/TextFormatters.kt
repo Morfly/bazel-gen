@@ -2,19 +2,17 @@
 
 package org.morfly.bazelgen.generator.formatter
 
-import org.morfly.bazelgen.generator.buildfile.*
-import org.morfly.bazelgen.generator.buildfile.ComprehensionType.DICT
-import org.morfly.bazelgen.generator.buildfile.ComprehensionType.LIST
-import org.morfly.bazelgen.generator.dsl.type.AnyFunctionCall
-import org.morfly.bazelgen.generator.dsl.type.ConcatenatedValue
-import org.morfly.bazelgen.generator.dsl.type.Reference
+import org.morfly.bazelgen.generator.dsl.core.*
+import org.morfly.bazelgen.generator.dsl.core.element.*
+import org.morfly.bazelgen.generator.dsl.core.element.ComprehensionType.DICT
+import org.morfly.bazelgen.generator.dsl.core.element.ComprehensionType.LIST
 import org.morfly.bazelgen.generator.formatter.IndentMode.*
 
 
 /**
  *
  *
- * IMPORTANT: it is PROHIBITED to add to constructur formatters that are declared BELOW the current one in this file.
+ * IMPORTANT: it is PROHIBITED to add to constructor formatters that are declared BELOW the current one in this file.
  * If such formatters are still required, there should be declared 'lateinit' variables for each of them inside the class.
  */
 class JustTextFormatter(indentSize: Int = DEFAULT_INDENT_SIZE) : IndentedTextFormatter<String>(indentSize) {
@@ -35,14 +33,14 @@ class JustTextFormatter(indentSize: Int = DEFAULT_INDENT_SIZE) : IndentedTextFor
 /**
  *
  *
- * IMPORTANT: it is PROHIBITED to add to constructur formatters that are declared BELOW the current one in this file.
+ * IMPORTANT: it is PROHIBITED to add to constructor formatters that are declared BELOW the current one in this file.
  * If such formatters are still required, there should be declared 'lateinit' variables for each of them inside the class.
  */
 class ListFormatter(
     indentSize: Int = DEFAULT_INDENT_SIZE
 ) : IndentedTextFormatter<List<*>>(indentSize) {
 
-    lateinit var valueFormatter: IndentedTextFormatter<Any?>
+    lateinit var expressionFormatter: IndentedTextFormatter<Expression>
 
     override fun format(list: List<*>, indentIndex: Int, mode: IndentMode): String {
         validate(list, indentIndex, mode)
@@ -55,14 +53,14 @@ class ListFormatter(
         }
         return when (list.size) {
             0 -> "$firstLineIndent[]"
-            1 -> firstLineIndent + "[${valueFormatter(list.first(), indentIndex + 1, CONTINUE_LINE)}]"
+            1 -> firstLineIndent + "[${expressionFormatter(list.first(), indentIndex + 1, CONTINUE_LINE)}]"
             else -> {
                 list.joinToString(
                     prefix = "$firstLineIndent[$LINE_SEPARATOR",
                     separator = ",$LINE_SEPARATOR",
                     postfix = ",$LINE_SEPARATOR$indent]",
                 ) {
-                    valueFormatter(it, indentIndex + 1, NEW_LINE)
+                    expressionFormatter(it, indentIndex + 1, NEW_LINE)
                 }
             }
         }
@@ -70,14 +68,14 @@ class ListFormatter(
 
     override fun validate(list: List<*>, indentIndex: Int, mode: IndentMode) {
         super.validate(list, indentIndex, mode)
-        require(::valueFormatter.isInitialized) { notInitializedMessage("valueFormatter") }
+        require(::expressionFormatter.isInitialized) { notInitializedMessage("expressionFormatter") }
     }
 }
 
 /**
  *
  *
- * IMPORTANT: it is PROHIBITED to add to constructur formatters that are declared BELOW the current one in this file.
+ * IMPORTANT: it is PROHIBITED to add to constructor formatters that are declared BELOW the current one in this file.
  * If such formatters are still required, there should be declared 'lateinit' variables for each of them inside the class.
  */
 class DictionaryFormatter(
@@ -85,7 +83,7 @@ class DictionaryFormatter(
     indentSize: Int = DEFAULT_INDENT_SIZE
 ) : IndentedTextFormatter<Map<String, *>>(indentSize) {
 
-    lateinit var valueFormatter: IndentedTextFormatter<Any?>
+    lateinit var expressionFormatter: IndentedTextFormatter<Expression>
 
     override fun format(dict: Map<String, *>, indentIndex: Int, mode: IndentMode): String {
         validate(dict, indentIndex, mode)
@@ -100,7 +98,7 @@ class DictionaryFormatter(
             0 -> "$firstLineIndent{}"
             1 -> dict.entries.first().let { (key, value) ->
                 val quotedKey = quoteFormatter(key)
-                val formattedValue = valueFormatter(value, indentIndex + 1, CONTINUE_LINE)
+                val formattedValue = expressionFormatter(value, indentIndex + 1, CONTINUE_LINE)
                 "$firstLineIndent{$quotedKey: $formattedValue}"
             }
             else -> {
@@ -111,7 +109,7 @@ class DictionaryFormatter(
                     postfix = ",$LINE_SEPARATOR$indent}"
                 ) { (key, value) ->
                     val quotedKey = quoteFormatter(key)
-                    val formattedValue = valueFormatter(value, indentIndex + 1, CONTINUE_LINE)
+                    val formattedValue = expressionFormatter(value, indentIndex + 1, CONTINUE_LINE)
                     "$nextIndent$quotedKey: $formattedValue"
                 }
             }
@@ -120,14 +118,14 @@ class DictionaryFormatter(
 
     override fun validate(dict: Map<String, *>, indentIndex: Int, mode: IndentMode) {
         super.validate(dict, indentIndex, mode)
-        require(::valueFormatter.isInitialized) { notInitializedMessage("valueFormatter") }
+        require(::expressionFormatter.isInitialized) { notInitializedMessage("valueFormatter") }
     }
 }
 
 /**
  *
  *
- * IMPORTANT: it is PROHIBITED to add to constructur formatters that are declared BELOW the current one in this file.
+ * IMPORTANT: it is PROHIBITED to add to constructor formatters that are declared BELOW the current one in this file.
  * If such formatters are still required, there should be declared 'lateinit' variables for each of them inside the class.
  */
 class FunctionCallFormatter(
@@ -179,16 +177,107 @@ class FunctionCallFormatter(
 /**
  *
  *
- * IMPORTANT: it is PROHIBITED to add to constructur formatters that are declared BELOW the current one in this file.
+ * IMPORTANT: it is PROHIBITED to add to constructor formatters that are declared BELOW the current one in this file.
  * If such formatters are still required, there should be declared 'lateinit' variables for each of them inside the class.
  */
-class ValueFormatter(
+class ComprehensionFormatter(
+    indentSize: Int = DEFAULT_INDENT_SIZE
+) : IndentedTextFormatter<Comprehension>(indentSize) {
+
+    lateinit var expressionFormatter: IndentedTextFormatter<Expression>
+    lateinit var statementFormatter: IndentedTextFormatter<BuildStatement>
+
+    override fun format(comp: Comprehension, indentIndex: Int, mode: IndentMode): String = with(comp) {
+        validate(comp, indentIndex, mode)
+
+        val indent = indent(indentIndex)
+        val firstLineIndent = when (mode) {
+            NEW_LINE -> indent
+            CONTINUE_LINE -> ""
+            CONTINUE_SINGLE_LINE -> TODO()
+        }
+        val nextIndent = indent.nextIndent()
+        """
+            |$firstLineIndent$open
+            |${formatExpression(expression, indentIndex + 1, NEW_LINE)}
+            |${nextIndent}for $`for` in ${formatIn()}${formatIf()}
+            |$indent$close
+        """.trimMargin()
+    }
+
+    private fun formatExpression(expression: Expression, indentIndex: Int, mode: IndentMode): String =
+        if (expression is BuildStatement) statementFormatter(expression, indentIndex, mode)
+        else expressionFormatter(expression, indentIndex, mode)
+
+    private fun Comprehension.formatIn() =
+        expressionFormatter(`in`, indentIndex = 0, mode = CONTINUE_LINE)
+
+    private fun Comprehension.formatIf() =
+        if (`if` != null) " if $`if`" else ""
+
+    private val Comprehension.open
+        get() = when (type) {
+            LIST -> "["
+            DICT -> "{"
+        }
+
+    private val Comprehension.close
+        get() = when (type) {
+            LIST -> "]"
+            DICT -> "}"
+        }
+
+    override fun validate(arg: Comprehension, indentIndex: Int, mode: IndentMode) {
+        super.validate(arg, indentIndex, mode)
+        require(::expressionFormatter.isInitialized) { notInitializedMessage("expressionFormatter") }
+        require(::statementFormatter.isInitialized) { notInitializedMessage("statementFormatter") }
+    }
+}
+
+/**
+ *
+ *
+ * IMPORTANT: it is PROHIBITED to add to constructor formatters that are declared BELOW the current one in this file.
+ * If such formatters are still required, there should be declared 'lateinit' variables for each of them inside the class.
+ */
+class ConcatenationFormatter(
+    indentSize: Int = DEFAULT_INDENT_SIZE
+) : IndentedTextFormatter<Concatenation<*, *>>(indentSize) {
+
+    lateinit var expressionFormatter: IndentedTextFormatter<Expression>
+
+    override fun format(concat: Concatenation<*, *>, indentIndex: Int, mode: IndentMode): String {
+        validate(concat, indentIndex, mode)
+
+        val left = expressionFormatter(concat.left, indentIndex, mode)
+        val right = expressionFormatter(concat.right, indentIndex, mode = CONTINUE_LINE)
+        return "$left ${concat.operator} $right"
+    }
+
+    override fun validate(concat: Concatenation<*, *>, indentIndex: Int, mode: IndentMode) {
+        super.validate(concat, indentIndex, mode)
+        require(::expressionFormatter.isInitialized) { notInitializedMessage("expressionFormatter") }
+        with(concat) {
+            if (left is BuildStatement || right is BuildStatement) error("Unable to format 'BuildStatement'")
+        }
+    }
+}
+
+/**
+ *
+ *
+ * IMPORTANT: it is PROHIBITED to add to constructor formatters that are declared BELOW the current one in this file.
+ * If such formatters are still required, there should be declared 'lateinit' variables for each of them inside the class.
+ */
+class ExpressionFormatter(
     private val baseFormatter: TextFormatter<Any?>,
     private val quoteFormatter: TextFormatter<String>,
     private val justTextFormatter: IndentedTextFormatter<String>,
     private val listFormatter: IndentedTextFormatter<List<*>>,
     private val dictionaryFormatter: IndentedTextFormatter<Map<String, *>>,
     private val functionCallFormatter: IndentedTextFormatter<FunctionCall>,
+    private val comprehensionFormatter: IndentedTextFormatter<Comprehension>,
+    private val concatenationFormatter: IndentedTextFormatter<Concatenation<*, *>>,
     indentSize: Int = DEFAULT_INDENT_SIZE
 ) : IndentedTextFormatter<Any?>(indentSize) {
 
@@ -201,7 +290,8 @@ class ValueFormatter(
             CONTINUE_SINGLE_LINE -> TODO()
         }
         return when (value) {
-            is ConcatenatedValue -> formatConcatenation(value, indentIndex, mode)
+            is Comprehension -> comprehensionFormatter(value, indentIndex, mode)
+            is Concatenation<*, *> -> concatenationFormatter(value, indentIndex, mode)
             is Reference -> "$indent${value.name}"
             is FunctionCall -> functionCallFormatter(value, indentIndex, mode)
             is List<*> -> listFormatter(value, indentIndex, mode)
@@ -213,19 +303,11 @@ class ValueFormatter(
         }
     }
 
-    /**
-     *
-     */
-    private fun formatConcatenation(value: ConcatenatedValue, indentIndex: Int, mode: IndentMode): String =
-        with(value) {
-            format(left, indentIndex, mode) + " $operator " + format(right, indentIndex, mode = CONTINUE_LINE)
-        }
-
     override fun validate(value: Any?, indentIndex: Int, mode: IndentMode) {
         super.validate(value, indentIndex, mode)
         when (value) {
             is BuildStatement -> error("Unable to format 'BuildStatement'")
-            is ConcatenatedValue -> validate(value.left, indentIndex, mode)
+            is Concatenation<*, *> -> validate(value.left, indentIndex, mode)
             is Map<*, *> -> value.cast()
         }
     }
@@ -244,16 +326,16 @@ class ValueFormatter(
 /**
  *
  */
-typealias Assignment = Pair<String, *>
+private typealias Assignment = Pair<String, Any?>
 
 /**
  *
  *
- * IMPORTANT: it is PROHIBITED to add to constructur formatters that are declared BELOW the current one in this file.
+ * IMPORTANT: it is PROHIBITED to add to constructor formatters that are declared BELOW the current one in this file.
  * If such formatters are still required, there should be declared 'lateinit' variables for each of them inside the class.
  */
 class AssignmentFormatter(
-    private val valueFormatter: IndentedTextFormatter<Any?>,
+    private val expressionFormatter: IndentedTextFormatter<Any?>,
     indentSize: Int = DEFAULT_INDENT_SIZE
 ) : IndentedTextFormatter<Assignment>(indentSize) {
 
@@ -267,14 +349,14 @@ class AssignmentFormatter(
             CONTINUE_SINGLE_LINE -> TODO()
         }
         val prefix = indent + if (variable.isBlank()) "" else "$variable = "
-        return prefix + valueFormatter(value, indentIndex, CONTINUE_LINE)
+        return prefix + expressionFormatter(value, indentIndex, CONTINUE_LINE)
     }
 }
 
 /**
  * TODO add alias, multiline support
  *
- * IMPORTANT: it is PROHIBITED to add to constructur formatters that are declared BELOW the current one in this file.
+ * IMPORTANT: it is PROHIBITED to add to constructor formatters that are declared BELOW the current one in this file.
  * If such formatters are still required, there should be declared 'lateinit' variables for each of them inside the class.
  */
 class LoadFormatter(
@@ -288,7 +370,7 @@ class LoadFormatter(
 
         val indent = indent(indentIndex)
         val quotedFile = quoteFormatter(file)
-        return load.rules.joinToString(
+        return load.symbols.keys.joinToString(
             prefix = "${indent}load($quotedFile, ",
             separator = ", ",
             postfix = ")"
@@ -301,91 +383,7 @@ class LoadFormatter(
 /**
  *
  *
- * IMPORTANT: it is PROHIBITED to add to constructur formatters that are declared BELOW the current one in this file.
- * If such formatters are still required, there should be declared 'lateinit' variables for each of them inside the class.
- */
-class ComprehensionFormatter(
-    private val valueFormatter: IndentedTextFormatter<Any?>,
-    indentSize: Int = DEFAULT_INDENT_SIZE
-) : IndentedTextFormatter<ComprehensionStatement>(indentSize) {
-
-    lateinit var statementFormatter: IndentedTextFormatter<BuildStatement>
-
-    override fun format(comp: ComprehensionStatement, indentIndex: Int, mode: IndentMode): String = with(comp) {
-        validate(comp, indentIndex, mode)
-
-        val indent = indent(indentIndex)
-        val firstLineIndent = when (mode) {
-            NEW_LINE -> indent
-            CONTINUE_LINE -> ""
-            CONTINUE_SINGLE_LINE -> TODO()
-        }
-        val nextIndent = indent.nextIndent()
-        """
-            |$firstLineIndent$open
-            |${statementFormatter(statement, indentIndex + 1, mode = NEW_LINE)}
-            |${nextIndent}for $`for` in ${formatInValue()}${formatIf()}
-            |$indent$close
-        """.trimMargin()
-    }
-
-    override fun validate(arg: ComprehensionStatement, indentIndex: Int, mode: IndentMode) {
-        super.validate(arg, indentIndex, mode)
-        require(::statementFormatter.isInitialized) { notInitializedMessage("statementFormatter") }
-    }
-
-    private val ComprehensionStatement.open
-        get() = when (type) {
-            LIST -> "["
-            DICT -> "{"
-        }
-
-    private val ComprehensionStatement.close
-        get() = when (type) {
-            LIST -> "]"
-            DICT -> "}"
-        }
-
-    private fun ComprehensionStatement.formatInValue() =
-        valueFormatter(`in`, indentIndex = 0, mode = CONTINUE_LINE)
-
-    private fun ComprehensionStatement.formatIf() =
-        if (`if` != null) " if $`if`" else ""
-}
-
-/**
- *
- *
- * IMPORTANT: it is PROHIBITED to add to constructur formatters that are declared BELOW the current one in this file.
- * If such formatters are still required, there should be declared 'lateinit' variables for each of them inside the class.
- */
-class ConcatenationFormatter(
-    private val valueFormatter: IndentedTextFormatter<Any?>,
-    indentSize: Int = DEFAULT_INDENT_SIZE
-) : IndentedTextFormatter<ConcatenationStatement>(indentSize) {
-
-    lateinit var statementFormatter: IndentedTextFormatter<BuildStatement>
-
-    override fun format(concat: ConcatenationStatement, indentIndex: Int, mode: IndentMode): String {
-        validate(concat, indentIndex, mode)
-
-        val left = statementFormatter(concat.left, indentIndex, mode)
-        val right =
-            if (concat.right is BuildStatement) statementFormatter(concat.right, indentIndex, mode = CONTINUE_LINE)
-            else valueFormatter(concat.right, indentIndex, mode = CONTINUE_LINE)
-        return "$left ${concat.operator} $right"
-    }
-
-    override fun validate(concat: ConcatenationStatement, indentIndex: Int, mode: IndentMode) {
-        super.validate(concat, indentIndex, mode)
-        require(::statementFormatter.isInitialized) { notInitializedMessage("statementFormatter") }
-    }
-}
-
-/**
- *
- *
- * IMPORTANT: it is PROHIBITED to add to constructur formatters that are declared BELOW the current one in this file.
+ * IMPORTANT: it is PROHIBITED to add to constructor formatters that are declared BELOW the current one in this file.
  * If such formatters are still required, there should be declared 'lateinit' variables for each of them inside the class.
  */
 class BazelRcFormatter : TextFormatter<BazelRcStatement> {
@@ -400,17 +398,14 @@ class BazelRcFormatter : TextFormatter<BazelRcStatement> {
 /**
  *
  *
- * IMPORTANT: it is PROHIBITED to add to constructur formatters that are declared BELOW the current one in this file.
+ * IMPORTANT: it is PROHIBITED to add to constructor formatters that are declared BELOW the current one in this file.
  * If such formatters are still required, there should be declared 'lateinit' variables for each of them inside the class.
  */
 class BuildStatementFormatter(
     private val justTextFormatter: IndentedTextFormatter<String>,
-    private val functionCallFormatter: IndentedTextFormatter<FunctionCall>,
-    private val valueFormatter: IndentedTextFormatter<Any?>,
+    private val expressionFormatter: IndentedTextFormatter<Expression>,
     private val assignmentFormatter: IndentedTextFormatter<Assignment>,
     private val loadFormatter: IndentedTextFormatter<LoadStatement>,
-    private val comprehensionFormatter: IndentedTextFormatter<ComprehensionStatement>,
-    private val concatenationFormatter: IndentedTextFormatter<ConcatenationStatement>,
     private val bazelRcFormatter: TextFormatter<BazelRcStatement>,
     indentSize: Int = DEFAULT_INDENT_SIZE
 ) : IndentedTextFormatter<BuildStatement>(indentSize) {
@@ -420,14 +415,11 @@ class BuildStatementFormatter(
 
         when (this) {
             is RawTextStatement -> justTextFormatter(text, indentIndex, mode)
-            is ExpressionStatement -> valueFormatter(expression, indentIndex, mode)
+            is ExpressionStatement<*> -> expressionFormatter(expression, indentIndex, mode)
             is LoadStatement -> loadFormatter(this, indentIndex, mode)
-            is FunctionStatement -> functionCallFormatter(AnyFunctionCall(name, args), indentIndex, mode)
             is AssignmentStatement<*> -> assignmentFormatter(name to value, indentIndex, mode)
-            is ComprehensionStatement -> comprehensionFormatter(this, indentIndex, mode)
-            is ConcatenationStatement -> concatenationFormatter(this, indentIndex, mode)
             is BazelRcStatement -> bazelRcFormatter(this)
-            EmptyLineStatement -> LINE_SEPARATOR
+            WhiteSpaceStatement -> LINE_SEPARATOR
         }
     }
 }

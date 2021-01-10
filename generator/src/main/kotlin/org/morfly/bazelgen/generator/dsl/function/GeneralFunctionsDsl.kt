@@ -4,7 +4,7 @@ package org.morfly.bazelgen.generator.dsl.function
 
 import org.morfly.bazelgen.generator.dsl.Label
 import org.morfly.bazelgen.generator.dsl.StarlarkContext
-import org.morfly.bazelgen.generator.dsl.type.pureFunctionCall
+import org.morfly.bazelgen.generator.dsl.core.element.pureFunctionCall
 
 
 /**
