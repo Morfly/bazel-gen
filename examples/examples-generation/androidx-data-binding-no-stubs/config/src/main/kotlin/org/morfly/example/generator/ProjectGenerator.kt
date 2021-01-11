@@ -12,7 +12,7 @@ import java.util.*
 
 const val GENERATED_PROJECT_ROOT_DIR = "../generated-project"
 private const val ROOT_PACKAGE_NAME = "org.morfly.bazelgen.example"
-private const val DEPS_OVERLAP = 2
+
 
 /**
  *
@@ -47,7 +47,7 @@ class ProjectGenerator {
 
         for (i in (numOfModules - 1) downTo 0) {
             val label = moduleGenerator.generate(i, internalDeps, i == 0)
-            if(internalDeps.size > depsOverlap) {
+            if (internalDeps.size > depsOverlap) {
                 internalDeps
                     .subList(depsOverlap, internalDeps.size)
                     .clear()

@@ -101,7 +101,6 @@ abstract class StarlarkContext : RawTextFeature, QuotingFeature, AssignmentsFeat
     override fun load(file: String, vararg rules: CharSequence) =
         LoadStatement(file, rules.associateBy({ it.toString() }, { null }))
             .also(statementsHolder::add)
-
     // endregion
 
     // region ConcatenationsFeature

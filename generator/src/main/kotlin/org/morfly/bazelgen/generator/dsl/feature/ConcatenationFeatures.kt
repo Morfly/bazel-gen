@@ -57,7 +57,6 @@ internal interface BaseConcatenationFeature : StarlarkDslFeature {
  */
 internal interface StatementConcatenationFeature : BaseConcatenationFeature {
 
-
     /**
      *
      */

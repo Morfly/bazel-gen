@@ -2,9 +2,9 @@
 
 package org.morfly.bazelgen.generator.dsl
 
-import org.morfly.bazelgen.generator.file.BazelRc
 import org.morfly.bazelgen.generator.dsl.core.BazelRcStatement
 import org.morfly.bazelgen.generator.dsl.core.BuildStatement
+import org.morfly.bazelgen.generator.file.BazelRc
 
 
 /**
@@ -37,7 +37,13 @@ inline fun bazelrc.bazelrc(relativePath: String = "", body: BazelRcContext.() ->
     BazelRcContext()
         .apply(body)
         .statements
-        .let { BazelRc(it, namePrefix = this::class.java.simpleName, relativePath) }
+        .let {
+            BazelRc(
+                it,
+                namePrefix = this::class.simpleName ?: error("'bazelrc' prefix must not be anonymous object."),
+                relativePath
+            )
+        }
 
 /**
  *
