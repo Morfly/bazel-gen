@@ -9,8 +9,8 @@ fun main() {
     println("Generating project...")
 
     projectGenerator.generate(
-        numOfModules = 2,
-        disableStrictJavaDeps = true
+        numOfModules = 5,
+        depsOverlap = 2
     )
 
     println("Project successfully generated.")

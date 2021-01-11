@@ -1,6 +1,6 @@
 package org.morfly.example.template.src
 
-import org.morfly.bazelgen.descriptor.PackageName
+import org.morfly.bazelgen.analyzer.PackageName
 
 
 fun activity_template(

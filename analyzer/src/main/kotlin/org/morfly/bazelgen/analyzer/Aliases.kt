@@ -1,4 +1,4 @@
-package org.morfly.bazelgen.descriptor
+package org.morfly.bazelgen.analyzer
 
 typealias RelativePath = CharSequence
 

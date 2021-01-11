@@ -1,6 +1,6 @@
 package org.morfly.example.generator
 
-import org.morfly.bazelgen.descriptor.PackageName
+import org.morfly.bazelgen.analyzer.PackageName
 import org.morfly.bazelgen.generator.writer.BazelFileWriter
 import org.morfly.bazelgen.generator.writer.DefaultFileWriter
 import org.morfly.example.template.android_data_binding_library_build_template

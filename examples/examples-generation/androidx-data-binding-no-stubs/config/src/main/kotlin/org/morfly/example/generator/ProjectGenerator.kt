@@ -11,9 +11,8 @@ import java.util.*
 
 
 const val GENERATED_PROJECT_ROOT_DIR = "../generated-project"
-
 private const val ROOT_PACKAGE_NAME = "org.morfly.bazelgen.example"
-
+private const val DEPS_OVERLAP = 2
 
 /**
  *
@@ -36,7 +35,7 @@ class ProjectGenerator {
     /**
      *
      */
-    fun generate(numOfModules: Int, disableStrictJavaDeps: Boolean = false) {
+    fun generate(numOfModules: Int, disableStrictJavaDeps: Boolean = false, depsOverlap: Int = 0) {
         require(numOfModules > 0) { "number of data binding modules must be positive." }
 
 //        workspaceDir.deleteRecursively()
@@ -48,7 +47,11 @@ class ProjectGenerator {
 
         for (i in (numOfModules - 1) downTo 0) {
             val label = moduleGenerator.generate(i, internalDeps, i == 0)
-            if (disableStrictJavaDeps) internalDeps.clear()
+            if(internalDeps.size > depsOverlap) {
+                internalDeps
+                    .subList(depsOverlap, internalDeps.size)
+                    .clear()
+            }
             internalDeps.add(0, label)
         }
 

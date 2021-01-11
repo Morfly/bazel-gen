@@ -1,6 +1,6 @@
 package org.morfly.example.template.manifest
 
-import org.morfly.bazelgen.descriptor.PackageName
+import org.morfly.bazelgen.analyzer.PackageName
 
 
 fun android_manifest_template(

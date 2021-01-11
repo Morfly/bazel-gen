@@ -2,7 +2,7 @@
 
 package org.morfly.bazelgen.generator.dsl.function
 
-import org.morfly.bazelgen.descriptor.RelativePath
+import org.morfly.bazelgen.analyzer.RelativePath
 import org.morfly.bazelgen.generator.dsl.BuildContext
 import org.morfly.bazelgen.generator.dsl.Feature
 import org.morfly.bazelgen.generator.dsl.Label

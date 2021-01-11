@@ -1,5 +1,5 @@
 rootProject.name = "bazel-gen"
 
-include("descriptor")
+include("analyzer")
 include("generator")
 include("migrator-gradle-plugin")

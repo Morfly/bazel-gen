@@ -1,6 +1,6 @@
 package org.morfly.example.template
 
-import org.morfly.bazelgen.descriptor.PackageName
+import org.morfly.bazelgen.analyzer.PackageName
 import org.morfly.bazelgen.generator.dsl.BUILD
 import org.morfly.bazelgen.generator.dsl.Label
 import org.morfly.bazelgen.generator.dsl.Name

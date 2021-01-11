@@ -12,7 +12,7 @@ gradlePlugin {
 }
 
 dependencies {
-    implementation(project(":descriptor"))
+    implementation(project(":analyzer"))
     implementation(project(":generator"))
 
     val androidGradlePluginVersion: String by rootProject.extra

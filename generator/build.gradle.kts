@@ -12,7 +12,7 @@ tasks.withType<Test> {
 //}
 
 dependencies {
-    api(project(":descriptor"))
+    api(project(":analyzer"))
 
     implementation(kotlin("stdlib"))
 
