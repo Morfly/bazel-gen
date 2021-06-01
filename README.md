@@ -1,3 +1,6 @@
+# DEPRECATED 
+This project was moved to [Airin](https://github.com/Morfly/airin) repository.
+
 # bazel-gen
 
 A Kotlin tool that allows to:
